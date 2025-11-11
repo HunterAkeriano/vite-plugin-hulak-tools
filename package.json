@@ -1,10 +1,31 @@
 {
-  "name": "${PROJECT_NAME}",
+  "name": "vite-plugin-hulak-tools",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "A collection of Vite plugins for page loading and Handlebars templating.",
+  "main": "./index.js",
+  "type": "module",
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "handlebars",
+    "loader"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "path": "^0.12.7"
   },
-  "private": true
+  "devDependencies": {},
+  "scripts": {
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HunterAkeriano/vite-plugin-hulak-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HunterAkeriano/vite-plugin-hulak-tools/issues"
+  },
+  "homepage": "https://github.com/HunterAkeriano/vite-plugin-hulak-tools#readme"
 }
