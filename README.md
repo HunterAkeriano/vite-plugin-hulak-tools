@@ -17,7 +17,7 @@ pnpm add vite-plugin-hulak-tools -D
 ```javascript
 // vite.config.js
 import { defineConfig } from 'vite'
-import { hulakPlugins } from 'hulak-plugins'
+import { hulakPlugins } from 'vite-plugin-hulak-tools'
 
 export default defineConfig({
     plugins: [
@@ -61,7 +61,7 @@ Solves the problem of template inclusion in JavaScript projects. By default, Vit
 ### Enable Only Loader Page
 
 ```javascript
-import { hulakPlugins } from 'hulak-plugins'
+import { hulakPlugins } from 'vite-plugin-hulak-tools'
 
 export default {
   plugins: [
@@ -96,7 +96,7 @@ With `hulakHandlebars` plugin, you can import HTML files as template functions w
 ```javascript
 // vite.config.js
 import { defineConfig } from 'vite'
-import { hulakPlugins } from 'hulak-plugins'
+import { hulakPlugins } from 'vite-plugin-hulak-tools'
 
 export default defineConfig({
   plugins: [
@@ -298,7 +298,7 @@ document.querySelector('.notifications-list').innerHTML = notificationsHTML
 ### Enable Both Plugins
 
 ```javascript
-import { hulakPlugins } from 'hulak-plugins'
+import { hulakPlugins } from 'vite-plugin-hulak-tools'
 
 export default {
     plugins: [
@@ -318,8 +318,8 @@ export default {
 You can also import and use plugins individually:
 
 ```javascript
-import hulakLoaderPage from 'hulak-plugins/hulak-loader-page'
-import hulakHandlebars from 'hulak-plugins/hulak-handlebars'
+import hulakLoaderPage from 'vite-plugin-hulak-tools/hulak-loader-page'
+import hulakHandlebars from 'vite-plugin-hulak-tools/hulak-handlebars'
 
 export default {
     plugins: [
