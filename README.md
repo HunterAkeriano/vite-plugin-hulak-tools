@@ -5,11 +5,11 @@ A collection of powerful Vite plugins designed to enhance your development workf
 ## 📦 Installation
 
 ```bash
-npm install hulak-plugins --save-dev
+npm install vite-plugin-hulak-tools --save-dev
 # or
-yarn add hulak-plugins -D
+yarn add vite-plugin-hulak-tools -D
 # or
-pnpm add hulak-plugins -D
+pnpm add vite-plugin-hulak-tools -D
 ```
 
 ## 🚀 Quick Start
