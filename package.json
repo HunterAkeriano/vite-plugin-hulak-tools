@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-hulak-tools",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A collection of Vite plugins for page loading and Handlebars templating.",
   "main": "./index.js",
   "type": "module",
