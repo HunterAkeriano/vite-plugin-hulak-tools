@@ -1,167 +1,131 @@
 import { readFileSync, existsSync } from 'fs'
-import { resolve } from 'path'
+import { resolve, sep } from 'path'
 
-function hulakHandlebars(options = {}) {
-  const partialDirectory = options.partialDirectory || resolve(process.cwd(), 'src/html/')
-  const fileRegex = /\.html$/
-
+export default function hulakHandlebars(options = {}) {
+  let root = process.cwd()
+  const partialDirectory = options.partialDirectory
+      ? resolve(process.cwd(), options.partialDirectory)
+      : resolve(process.cwd(), 'src/html')
+  const PREFIX = '\0hulak:'
+  const SUFFIX = '.hulak'
+  const norm = p => p.split(sep).join('/')
+  const stripQ = s => s.replace(/[?#].*$/, '')
+  const inDir = p => norm(p).startsWith(norm(partialDirectory) + '/')
   const paramRegex = /([a-zA-Z0-9_-]+)=(['"])(.*?)\2|([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)/g
+
+  function toAbs(id, importer) {
+    const clean = stripQ(id)
+    if (clean.startsWith('/')) return resolve(root, '.' + clean)
+    if (/^[a-zA-Z]:/.test(clean)) return clean
+    const base = importer ? resolve(importer, '..') : root
+    return resolve(base, clean)
+  }
 
   function processPartials(content, parentParams = {}) {
     const partialRegex = /\{\{>\s*([^\s}]+)\s*([\s\S]*?)\}\}/g
-
     return content.replace(partialRegex, (match, partialPath, paramsString) => {
       const fullPartialPath = resolve(partialDirectory, partialPath + '.html')
-
       if (existsSync(fullPartialPath)) {
-        try {
-          let partialContent = readFileSync(fullPartialPath, 'utf-8')
-
-          let params = { ...parentParams }
-          let paramMatch
-          const localParamRegex = new RegExp(paramRegex.source, paramRegex.flags)
-
-          while ((paramMatch = localParamRegex.exec(paramsString)) !== null) {
-            if (paramMatch[1]) {
-              params[paramMatch[1]] = paramMatch[3]
-            } else if (paramMatch[4]) {
-              const targetKey = paramMatch[4]
-              const sourceKey = paramMatch[5]
-              if (parentParams.hasOwnProperty(sourceKey)) {
-                params[targetKey] = parentParams[sourceKey]
-              }
-            }
+        let partialContent = readFileSync(fullPartialPath, 'utf-8')
+        let params = { ...parentParams }
+        let m,
+            r = new RegExp(paramRegex.source, paramRegex.flags)
+        while ((m = r.exec(paramsString)) !== null) {
+          if (m[1]) params[m[1]] = m[3]
+          else if (m[4]) {
+            const t = m[4],
+                s = m[5]
+            if (Object.prototype.hasOwnProperty.call(parentParams, s)) params[t] = parentParams[s]
           }
-
-          partialContent = processPartials(partialContent, params)
-
-          Object.keys(params).forEach(key => {
-            const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g')
-            partialContent = partialContent.replace(regex, params[key])
-          })
-
-          return partialContent
-        } catch (error) {
-          console.warn(`Error processing partial ${fullPartialPath}: ${error.message}`)
-          return match
         }
+        partialContent = processPartials(partialContent, params)
+        Object.keys(params).forEach(k => {
+          const re = new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g')
+          partialContent = partialContent.replace(re, params[k])
+        })
+        return partialContent
       }
-
-      console.warn(`Partial file not found: ${fullPartialPath}`)
       return match
     })
   }
 
   return {
     name: 'hulak-plugin-handlebars-import',
+    enforce: 'pre',
+    configResolved(cfg) {
+      root = cfg.root || root
+    },
 
-    transform(code, id) {
-      if (fileRegex.test(id) && id.includes(partialDirectory)) {
-        let fileContent = readFileSync(id, 'utf-8')
-        fileContent = processPartials(fileContent, {})
+    resolveId(id, importer) {
+      const clean = stripQ(id)
+      if (!clean.endsWith('.html')) return null
+      const abs = toAbs(clean, importer)
+      if (!inDir(abs)) return null
+      const q = id.includes('?') ? id.slice(id.indexOf('?')) : ''
+      return PREFIX + abs.replace(/\.html$/, SUFFIX) + q
+    },
 
-        const templateFunction = `
+    load(id) {
+      if (!id.startsWith(PREFIX)) return null
+      const real = stripQ(id.slice(PREFIX.length)).replace(new RegExp(SUFFIX + '$'), '.html')
+      let fileContent = readFileSync(real, 'utf-8')
+      fileContent = processPartials(fileContent, {})
+      const base64 = Buffer.from(fileContent, 'utf-8').toString('base64')
+
+      const code = `
 export default function(initialProps = {}) {
-  const sourceTemplate = ${JSON.stringify(fileContent)};
+  const decode = (b64) => (typeof atob === 'function') ? atob(b64) : (typeof Buffer !== 'undefined' ? Buffer.from(b64, 'base64').toString('utf-8') : (() => { throw new Error('b64'); })());
+  const sourceTemplate = decode('${base64}');
   let currentProps = { ...initialProps };
+  const LB = String.fromCharCode(123), RB = String.fromCharCode(125), L2 = LB + LB, R2 = RB + RB;
 
   function createHtml(props) {
-    let template = sourceTemplate;
-    let maxIterations = 10;
-    let iteration = 0;
-    
-    while (iteration < maxIterations && template.indexOf('{{#if') !== -1) {
+    let template = sourceTemplate, maxIterations = 10, iteration = 0;
+    while (iteration < maxIterations && template.indexOf(L2 + '#if') !== -1) {
       iteration++;
-      
-      template = template.replace(/\\{\\{#if\\s+([^}]+?)\\}\\}(.*?)\\{\\{else\\s*\\}\\}(.*?)\\{\\{\\/if\\s*\\}\\}/g, (match, condition, ifBlock, elseBlock) => {
-        const key = condition.trim();
-        return props[key] ? ifBlock : elseBlock;
-      });
-
-      template = template.replace(/\\{\\{#if\\s+([^}]+?)\\}\\}(.*?)\\{\\{\\/if\\s*\\}\\}/g, (match, condition, block) => {
-        const key = condition.trim();
-        return props[key] ? block : '';
-      });
-
-      template = template.replace(/\\{\\{#if\\s*\\((eq\\s+([^\\s]+)\\s+"([^"]+)"\\s*)\\)\\}\\}([\\s\\S]*?)\\{\\{else\\s*\\}\\}([\\s\\S]*?)\\{\\{\\/if\\s*\\}\\}/g, (match, fullCond, propKey, expectedVal, ifBlock, elseBlock) => {
-        return (props[propKey] === expectedVal) ? ifBlock : elseBlock;
-      });
-
-      template = template.replace(/\\{\\{#if\\s*\\((eq\\s+([^\\s]+)\\s+"([^"]+)"\\s*)\\)\\}\\}([\\s\\S]*?)\\{\\{\\/if\\s*\\}\\}/g, (match, fullCond, propKey, expectedVal, block) => {
-        return (props[propKey] === expectedVal) ? block : '';
-      });
+      template = template.replace(new RegExp(\`\${L2}#if\\\\s+([^}]+?)\${R2}(.*?)\${L2}else\\\\s*\${R2}(.*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, c, a, b) => (props[c.trim()] ? a : b));
+      template = template.replace(new RegExp(\`\${L2}#if\\\\s+([^}]+?)\${R2}(.*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, c, a) => (props[c.trim()] ? a : ''));
+      template = template.replace(new RegExp(\`\${L2}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${R2}([\\\\s\\\\S]*?)\${L2}else\\\\s*\${R2}([\\\\s\\\\S]*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, _f, k, v, a, b) => (props[k] === v ? a : b));
+      template = template.replace(new RegExp(\`\${L2}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${R2}([\\\\s\\\\S]*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, _f, k, v, a) => (props[k] === v ? a : ''));
     }
-
-    Object.keys(props).forEach(key => {
-      const regex = new RegExp(\`\\\\{\\\\{\\\\s*\${key}\\\\s*\\\\}\\\\}\`, 'g');
-      template = template.replace(regex, props[key] || '');
-    });
-    
+    Object.keys(props).forEach(k => { const re = new RegExp(\`\${L2}\\\\s*\${k}\\\\s*\${R2}\`, 'g'); template = template.replace(re, props[k] ?? '') });
     template = template.replace(/\\s[a-zA-Z0-9_-]+=['"]\\s*['"]/g, '');
-    template = template.replace(/\\{\\{[^}]+?\\}\\}/g, '');
-
+    template = template.replace(new RegExp(\`\${L2}[^}]+?\${R2}\`, 'g'), '');
     return template;
   }
 
   function renderElement(props) {
-    const htmlString = createHtml(props);
-    const tempContainer = document.createElement('div');
-    tempContainer.innerHTML = htmlString.trim();
-    return tempContainer.firstElementChild;
+    const html = createHtml(props), d = document.createElement('div');
+    d.innerHTML = html.trim();
+    return d.firstElementChild;
   }
-  
+
   let rootElement = renderElement(currentProps);
   const methods = {};
-
   function update(newProps) {
     currentProps = { ...currentProps, ...newProps };
-    
     if (rootElement.parentElement) {
-      const parent = rootElement.parentElement;
-      const newElement = renderElement(currentProps);
-      
-      Object.keys(methods).forEach(key => {
-        newElement[key] = methods[key];
-      });
-
-      parent.replaceChild(newElement, rootElement);
-      rootElement = newElement;
-      return newElement;
+      const p = rootElement.parentElement, n = renderElement(currentProps);
+      Object.keys(methods).forEach(k => n[k] = methods[k]);
+      p.replaceChild(n, rootElement);
+      rootElement = n;
+      return n;
     } else {
-      const newElement = renderElement(currentProps);
-      Object.keys(methods).forEach(key => {
-        newElement[key] = methods[key];
-      });
-      rootElement = newElement;
-      return newElement;
+      const n = renderElement(currentProps);
+      Object.keys(methods).forEach(k => n[k] = methods[k]);
+      rootElement = n;
+      return n;
     }
   }
-
   methods.update = update;
-  methods.toString = () => rootElement.outerHTML;
-  methods.render = (target) => {
-    if (target && target.appendChild) {
-      target.appendChild(rootElement);
-    }
-    return rootElement;
-  };
-  
-  Object.keys(methods).forEach(key => {
-    rootElement[key] = methods[key];
-  });
-
+  methods.toString = () => rootElement?.outerHTML ?? '';
+  methods.render = (t) => { if (t && t.appendChild) t.appendChild(rootElement); return rootElement };
+  Object.keys(methods).forEach(k => rootElement[k] = methods[k]);
   return rootElement;
 }
-        `.trim()
+`.trim()
 
-        return {
-          code: templateFunction,
-          map: null,
-        }
-      }
-      return null
+      return { code, map: null }
     },
   }
 }
-
-export default hulakHandlebars
