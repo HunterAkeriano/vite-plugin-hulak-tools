@@ -2,46 +2,45 @@ import { readFileSync, existsSync } from 'fs'
 import { resolve, sep } from 'path'
 
 export default function hulakHandlebars(options = {}) {
-  let root = process.cwd()
-  const partialDirectory = options.partialDirectory
+  let projectRoot = process.cwd()
+  const partialsDir = options.partialDirectory
       ? resolve(process.cwd(), options.partialDirectory)
       : resolve(process.cwd(), 'src/html')
-  const PREFIX = '\0hulak:'
-  const SUFFIX = '.hulak'
-  const norm = p => p.split(sep).join('/')
-  const stripQ = s => s.replace(/[?#].*$/, '')
-  const inDir = p => norm(p).startsWith(norm(partialDirectory) + '/')
-  const paramRegex = /([a-zA-Z0-9_-]+)=(['"])(.*?)\2|([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)/g
+  const VIRTUAL_PREFIX = '\0hulak:'
+  const VIRTUAL_SUFFIX = '.hulak'
+  const normalizePath = p => p.split(sep).join('/')
+  const stripQuery = s => s.replace(/[?#].*$/, '')
+  const isInPartialsDir = p => normalizePath(p).startsWith(normalizePath(partialsDir) + '/')
+  const paramPattern = /([a-zA-Z0-9_-]+)=(['"])(.*?)\2|([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)/g
 
-  function toAbs(id, importer) {
-    const clean = stripQ(id)
-    if (clean.startsWith('/')) return resolve(root, '.' + clean)
+  function toAbsolute(importId, importer) {
+    const clean = stripQuery(importId)
+    if (clean.startsWith('/')) return resolve(projectRoot, '.' + clean)
     if (/^[a-zA-Z]:/.test(clean)) return clean
-    const base = importer ? resolve(importer, '..') : root
-    return resolve(base, clean)
+    const baseDir = importer ? resolve(importer, '..') : projectRoot
+    return resolve(baseDir, clean)
   }
 
-  function processPartials(content, parentParams = {}) {
-    const partialRegex = /\{\{>\s*([^\s}]+)\s*([\s\S]*?)\}\}/g
-    return content.replace(partialRegex, (match, partialPath, paramsString) => {
-      const fullPartialPath = resolve(partialDirectory, partialPath + '.html')
-      if (existsSync(fullPartialPath)) {
-        let partialContent = readFileSync(fullPartialPath, 'utf-8')
-        let params = { ...parentParams }
-        let m,
-            r = new RegExp(paramRegex.source, paramRegex.flags)
-        while ((m = r.exec(paramsString)) !== null) {
-          if (m[1]) params[m[1]] = m[3]
-          else if (m[4]) {
-            const t = m[4],
-                s = m[5]
-            if (Object.prototype.hasOwnProperty.call(parentParams, s)) params[t] = parentParams[s]
+  function expandPartials(html, parentParams = {}) {
+    const partialIncludePattern = /\{\{>\s*([^\s}]+)\s*([\s\S]*?)\}\}/g
+    return html.replace(partialIncludePattern, (match, partialPath, paramsString) => {
+      const partialFile = resolve(partialsDir, partialPath + '.html')
+      if (existsSync(partialFile)) {
+        let partialContent = readFileSync(partialFile, 'utf-8')
+        let mergedParams = { ...parentParams }
+        let execMatch, localParamPattern = new RegExp(paramPattern.source, paramPattern.flags)
+        while ((execMatch = localParamPattern.exec(paramsString)) !== null) {
+          if (execMatch[1]) mergedParams[execMatch[1]] = execMatch[3]
+          else if (execMatch[4]) {
+            const targetKey = execMatch[4]
+            const sourceKey = execMatch[5]
+            if (Object.prototype.hasOwnProperty.call(parentParams, sourceKey)) mergedParams[targetKey] = parentParams[sourceKey]
           }
         }
-        partialContent = processPartials(partialContent, params)
-        Object.keys(params).forEach(k => {
-          const re = new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g')
-          partialContent = partialContent.replace(re, params[k])
+        partialContent = expandPartials(partialContent, mergedParams)
+        Object.keys(mergedParams).forEach(key => {
+          const keyPattern = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g')
+          partialContent = partialContent.replace(keyPattern, mergedParams[key])
         })
         return partialContent
       }
@@ -53,28 +52,28 @@ export default function hulakHandlebars(options = {}) {
     name: 'hulak-plugin-handlebars-import',
     enforce: 'pre',
     configResolved(cfg) {
-      root = cfg.root || root
+      projectRoot = cfg.root || projectRoot
     },
 
     resolveId(id, importer) {
-      const clean = stripQ(id)
+      const clean = stripQuery(id)
       if (!clean.endsWith('.html')) return null
-      const abs = toAbs(clean, importer)
-      if (!inDir(abs)) return null
-      const q = id.includes('?') ? id.slice(id.indexOf('?')) : ''
-      return PREFIX + abs.replace(/\.html$/, SUFFIX) + q
+      const abs = toAbsolute(clean, importer)
+      if (!isInPartialsDir(abs)) return null
+      const query = id.includes('?') ? id.slice(id.indexOf('?')) : ''
+      return VIRTUAL_PREFIX + abs.replace(/\.html$/, VIRTUAL_SUFFIX) + query
     },
 
     load(id) {
-      if (!id.startsWith(PREFIX)) return null
-      const real = stripQ(id.slice(PREFIX.length)).replace(new RegExp(SUFFIX + '$'), '.html')
-      let fileContent = readFileSync(real, 'utf-8')
-      fileContent = processPartials(fileContent, {})
-      const base64 = Buffer.from(fileContent, 'utf-8').toString('base64')
+      if (!id.startsWith(VIRTUAL_PREFIX)) return null
+      const realPath = stripQuery(id.slice(VIRTUAL_PREFIX.length)).replace(new RegExp(VIRTUAL_SUFFIX + '$'), '.html')
+      let sourceHtml = readFileSync(realPath, 'utf-8')
+      sourceHtml = expandPartials(sourceHtml, {})
+      const base64 = Buffer.from(sourceHtml, 'utf-8').toString('base64')
 
       const code = `
 export default function(initialProps = {}) {
-  const decode = (b64) => {
+  const decodeBase64Utf8 = (b64) => {
     if (typeof atob === 'function' && typeof TextDecoder !== 'undefined') {
       const bin = atob(b64);
       const bytes = new Uint8Array(bin.length);
@@ -87,52 +86,52 @@ export default function(initialProps = {}) {
     const bin = atob(b64);
     try { return decodeURIComponent(escape(bin)); } catch (e) { return bin; }
   };
-  const sourceTemplate = decode('${base64}');
+  const sourceTemplate = decodeBase64Utf8('${base64}');
   let currentProps = { ...initialProps };
-  const LB = String.fromCharCode(123), RB = String.fromCharCode(125), L2 = LB + LB, R2 = RB + RB;
+  const LBRACE = String.fromCharCode(123), RBRACE = String.fromCharCode(125), OPEN = LBRACE + LBRACE, CLOSE = RBRACE + RBRACE;
 
   function createHtml(props) {
     let template = sourceTemplate, maxIterations = 10, iteration = 0;
-    while (iteration < maxIterations && template.indexOf(L2 + '#if') !== -1) {
+    while (iteration < maxIterations && template.indexOf(OPEN + '#if') !== -1) {
       iteration++;
-      template = template.replace(new RegExp(\`\${L2}#if\\\\s+([^}]+?)\${R2}(.*?)\${L2}else\\\\s*\${R2}(.*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, c, a, b) => (props[c.trim()] ? a : b));
-      template = template.replace(new RegExp(\`\${L2}#if\\\\s+([^}]+?)\${R2}(.*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, c, a) => (props[c.trim()] ? a : ''));
-      template = template.replace(new RegExp(\`\${L2}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${R2}([\\\\s\\\\S]*?)\${L2}else\\\\s*\${R2}([\\\\s\\\\S]*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, _f, k, v, a, b) => (props[k] === v ? a : b));
-      template = template.replace(new RegExp(\`\${L2}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${R2}([\\\\s\\\\S]*?)\${L2}\\\\/if\\\\s*\${R2}\`, 'g'), (m, _f, k, v, a) => (props[k] === v ? a : ''));
+      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s+([^}]+?)\${CLOSE}(.*?)\${OPEN}else\\\\s*\${CLOSE}(.*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, cond, ifBlock, elseBlock) => (props[cond.trim()] ? ifBlock : elseBlock));
+      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s+([^}]+?)\${CLOSE}(.*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, cond, block) => (props[cond.trim()] ? block : ''));
+      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}else\\\\s*\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, _f, key, expected, ifBlock, elseBlock) => (props[key] === expected ? ifBlock : elseBlock));
+      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, _f, key, expected, block) => (props[key] === expected ? block : ''));
     }
-    Object.keys(props).forEach(k => { const re = new RegExp(\`\${L2}\\\\s*\${k}\\\\s*\${R2}\`, 'g'); template = template.replace(re, props[k] ?? '') });
+    Object.keys(props).forEach(key => { const keyRe = new RegExp(\`\${OPEN}\\\\s*\${key}\\\\s*\${CLOSE}\`, 'g'); template = template.replace(keyRe, props[key] ?? '') });
     template = template.replace(/\\s[a-zA-Z0-9_-]+=['"]\\s*['"]/g, '');
-    template = template.replace(new RegExp(\`\${L2}[^}]+?\${R2}\`, 'g'), '');
+    template = template.replace(new RegExp(\`\${OPEN}[^}]+?\${CLOSE}\`, 'g'), '');
     return template;
   }
 
   function renderElement(props) {
-    const html = createHtml(props), d = document.createElement('div');
-    d.innerHTML = html.trim();
-    return d.firstElementChild;
+    const html = createHtml(props), container = document.createElement('div');
+    container.innerHTML = html.trim();
+    return container.firstElementChild;
   }
 
   let rootElement = renderElement(currentProps);
-  const methods = {};
+  const api = {};
   function update(newProps) {
     currentProps = { ...currentProps, ...newProps };
     if (rootElement.parentElement) {
-      const p = rootElement.parentElement, n = renderElement(currentProps);
-      Object.keys(methods).forEach(k => n[k] = methods[k]);
-      p.replaceChild(n, rootElement);
-      rootElement = n;
-      return n;
+      const parent = rootElement.parentElement, next = renderElement(currentProps);
+      Object.keys(api).forEach(name => next[name] = api[name]);
+      parent.replaceChild(next, rootElement);
+      rootElement = next;
+      return next;
     } else {
-      const n = renderElement(currentProps);
-      Object.keys(methods).forEach(k => n[k] = methods[k]);
-      rootElement = n;
-      return n;
+      const next = renderElement(currentProps);
+      Object.keys(api).forEach(name => next[name] = api[name]);
+      rootElement = next;
+      return next;
     }
   }
-  methods.update = update;
-  methods.toString = () => rootElement?.outerHTML ?? '';
-  methods.render = (t) => { if (t && t.appendChild) t.appendChild(rootElement); return rootElement };
-  Object.keys(methods).forEach(k => rootElement[k] = methods[k]);
+  api.update = update;
+  api.toString = () => rootElement?.outerHTML ?? '';
+  api.render = (target) => { if (target && target.appendChild) target.appendChild(rootElement); return rootElement };
+  Object.keys(api).forEach(name => rootElement[name] = api[name]);
   return rootElement;
 }
 `.trim()
