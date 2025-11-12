@@ -74,7 +74,19 @@ export default function hulakHandlebars(options = {}) {
 
       const code = `
 export default function(initialProps = {}) {
-  const decode = (b64) => (typeof atob === 'function') ? atob(b64) : (typeof Buffer !== 'undefined' ? Buffer.from(b64, 'base64').toString('utf-8') : (() => { throw new Error('b64'); })());
+  const decode = (b64) => {
+    if (typeof atob === 'function' && typeof TextDecoder !== 'undefined') {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder('utf-8').decode(bytes);
+    }
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(b64, 'base64').toString('utf-8');
+    }
+    const bin = atob(b64);
+    try { return decodeURIComponent(escape(bin)); } catch (e) { return bin; }
+  };
   const sourceTemplate = decode('${base64}');
   let currentProps = { ...initialProps };
   const LB = String.fromCharCode(123), RB = String.fromCharCode(125), L2 = LB + LB, R2 = RB + RB;
