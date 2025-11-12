@@ -13,10 +13,8 @@ function hulakLoaderPage() {
     if (cssGuard) cssGuard.remove();
   `
 
-  const BLOCK_BROWSER_SPINNER_HACK = `
-    const spinnerGuardScript = document.createElement('script');
-    spinnerGuardScript.type = 'text/javascript';
-    spinnerGuardScript.innerHTML = \`
+  const BLOCK_BROWSER_SPINNER_HACK_TAG = `
+    <script id="vite-spinner-guard" type="text/javascript">
       window.__viteLoadGuardSpinnerResolve;
       window.__viteLoadGuardSpinnerPromise = new Promise(resolve => {
         window.__viteLoadGuardSpinnerResolve = resolve;
@@ -27,9 +25,7 @@ function hulakLoaderPage() {
         const selfScript = document.getElementById('vite-spinner-guard');
         if (selfScript) selfScript.remove();
       })();
-    \`;
-    spinnerGuardScript.id = 'vite-spinner-guard';
-    document.body.appendChild(spinnerGuardScript);
+    </script>
   `
 
   const RESOLVE_SPINNER_HACK = `
@@ -58,27 +54,27 @@ function hulakLoaderPage() {
       `
 
       return html
-        .replace(/<head>/i, `<head>${blockingStyles}`)
-        .replace(/<\/body>/i, `${BLOCK_BROWSER_SPINNER_HACK}</body>`)
+          .replace(/<head>/i, `<head>${blockingStyles}`)
+          .replace(/<\/body>/i, `${BLOCK_BROWSER_SPINNER_HACK_TAG}</body>`)
     },
 
     transform(code, id) {
       if (
-        REGEX_ENTRY_FILE.test(id) &&
-        !id.includes('node_modules') &&
-        !id.includes('.vite/deps') &&
-        !isMainEntryProcessed
+          REGEX_ENTRY_FILE.test(id) &&
+          !id.includes('node_modules') &&
+          !id.includes('.vite/deps') &&
+          !isMainEntryProcessed
       ) {
         isMainEntryProcessed = true
         if (/^\s*export\s+/m.test(code)) return code
 
         const imports = []
         const body = code
-          .replace(REGEX_IMPORTS, match => {
-            imports.push(match)
-            return ''
-          })
-          .trim()
+            .replace(REGEX_IMPORTS, match => {
+              imports.push(match)
+              return ''
+            })
+            .trim()
 
         const importsString = imports.join('\n')
 
