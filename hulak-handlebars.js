@@ -28,20 +28,28 @@ export default function hulakHandlebars(options = {}) {
       if (existsSync(partialFile)) {
         let partialContent = readFileSync(partialFile, 'utf-8')
         let mergedParams = { ...parentParams }
-        let execMatch, localParamPattern = new RegExp(paramPattern.source, paramPattern.flags)
+        let execMatch,
+            localParamPattern = new RegExp(paramPattern.source, paramPattern.flags)
+
         while ((execMatch = localParamPattern.exec(paramsString)) !== null) {
-          if (execMatch[1]) mergedParams[execMatch[1]] = execMatch[3]
-          else if (execMatch[4]) {
+          if (execMatch[1]) {
+            mergedParams[execMatch[1]] = execMatch[3]
+          } else if (execMatch[4]) {
             const targetKey = execMatch[4]
             const sourceKey = execMatch[5]
-            if (Object.prototype.hasOwnProperty.call(parentParams, sourceKey)) mergedParams[targetKey] = parentParams[sourceKey]
+            if (Object.prototype.hasOwnProperty.call(parentParams, sourceKey)) {
+              mergedParams[targetKey] = parentParams[sourceKey]
+            }
           }
         }
+
         partialContent = expandPartials(partialContent, mergedParams)
+
         Object.keys(mergedParams).forEach(key => {
           const keyPattern = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g')
           partialContent = partialContent.replace(keyPattern, mergedParams[key])
         })
+
         return partialContent
       }
       return match
@@ -51,6 +59,7 @@ export default function hulakHandlebars(options = {}) {
   return {
     name: 'hulak-plugin-handlebars-import',
     enforce: 'pre',
+
     configResolved(cfg) {
       projectRoot = cfg.root || projectRoot
     },
@@ -66,7 +75,9 @@ export default function hulakHandlebars(options = {}) {
 
     load(id) {
       if (!id.startsWith(VIRTUAL_PREFIX)) return null
+
       const realPath = stripQuery(id.slice(VIRTUAL_PREFIX.length)).replace(new RegExp(VIRTUAL_SUFFIX + '$'), '.html')
+
       let sourceHtml = readFileSync(realPath, 'utf-8')
       sourceHtml = expandPartials(sourceHtml, {})
       const base64 = Buffer.from(sourceHtml, 'utf-8').toString('base64')
@@ -86,37 +97,80 @@ export default function(initialProps = {}) {
     const bin = atob(b64);
     try { return decodeURIComponent(escape(bin)); } catch (e) { return bin; }
   };
+
   const sourceTemplate = decodeBase64Utf8('${base64}');
   let currentProps = { ...initialProps };
-  const LBRACE = String.fromCharCode(123), RBRACE = String.fromCharCode(125), OPEN = LBRACE + LBRACE, CLOSE = RBRACE + RBRACE;
+  const LBRACE = String.fromCharCode(123),
+        RBRACE = String.fromCharCode(125),
+        OPEN = LBRACE + LBRACE,
+        CLOSE = RBRACE + RBRACE;
 
   function createHtml(props) {
-    let template = sourceTemplate, maxIterations = 10, iteration = 0;
+    let template = sourceTemplate,
+        maxIterations = 10,
+        iteration = 0;
+
     while (iteration < maxIterations && template.indexOf(OPEN + '#if') !== -1) {
       iteration++;
-      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s+([^}]+?)\${CLOSE}(.*?)\${OPEN}else\\\\s*\${CLOSE}(.*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, cond, ifBlock, elseBlock) => (props[cond.trim()] ? ifBlock : elseBlock));
-      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s+([^}]+?)\${CLOSE}(.*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, cond, block) => (props[cond.trim()] ? block : ''));
-      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}else\\\\s*\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, _f, key, expected, ifBlock, elseBlock) => (props[key] === expected ? ifBlock : elseBlock));
-      template = template.replace(new RegExp(\`\${OPEN}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'), (m, _f, key, expected, block) => (props[key] === expected ? block : ''));
+
+      // {{#if cond}} ... {{else}} ... {{/if}}
+      template = template.replace(
+        new RegExp(\`\${OPEN}#if\\\\s+([^}]+?)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}else\\\\s*\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'),
+        (m, cond, ifBlock, elseBlock) => (props[cond.trim()] ? ifBlock : elseBlock)
+      );
+
+      // {{#if cond}} ... {{/if}}
+      template = template.replace(
+        new RegExp(\`\${OPEN}#if\\\\s+([^}]+?)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'),
+        (m, cond, block) => (props[cond.trim()] ? block : '')
+      );
+
+      // {{#if (eq key "value")}} ... {{else}} ... {{/if}}
+      template = template.replace(
+        new RegExp(\`\${OPEN}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}else\\\\s*\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'),
+        (m, _f, key, expected, ifBlock, elseBlock) =>
+          (props[key] === expected ? ifBlock : elseBlock)
+      );
+
+      // {{#if (eq key "value")}} ... {{/if}}
+      template = template.replace(
+        new RegExp(\`\${OPEN}#if\\\\s*\\\\((eq\\\\s+([^\\\\s]+)\\\\s+"([^"]+)"\\\\s*)\\\\)\${CLOSE}([\\\\s\\\\S]*?)\${OPEN}\\\\/if\\\\s*\${CLOSE}\`, 'g'),
+        (m, _f, key, expected, block) =>
+          (props[key] === expected ? block : '')
+      );
     }
-    Object.keys(props).forEach(key => { const keyRe = new RegExp(\`\${OPEN}\\\\s*\${key}\\\\s*\${CLOSE}\`, 'g'); template = template.replace(keyRe, props[key] ?? '') });
+
+  
+    Object.keys(props).forEach(key => {
+      const keyRe = new RegExp(\`\${OPEN}\\\\s*\${key}\\\\s*\${CLOSE}\`, 'g');
+      template = template.replace(keyRe, props[key] ?? '');
+    });
+
+
     template = template.replace(/\\s[a-zA-Z0-9_-]+=['"]\\s*['"]/g, '');
+
+
     template = template.replace(new RegExp(\`\${OPEN}[^}]+?\${CLOSE}\`, 'g'), '');
+
     return template;
   }
 
   function renderElement(props) {
-    const html = createHtml(props), container = document.createElement('div');
+    const html = createHtml(props);
+    const container = document.createElement('div');
     container.innerHTML = html.trim();
     return container.firstElementChild;
   }
 
   let rootElement = renderElement(currentProps);
   const api = {};
+
   function update(newProps) {
     currentProps = { ...currentProps, ...newProps };
+
     if (rootElement.parentElement) {
-      const parent = rootElement.parentElement, next = renderElement(currentProps);
+      const parent = rootElement.parentElement;
+      const next = renderElement(currentProps);
       Object.keys(api).forEach(name => next[name] = api[name]);
       parent.replaceChild(next, rootElement);
       rootElement = next;
@@ -128,15 +182,21 @@ export default function(initialProps = {}) {
       return next;
     }
   }
+
   api.update = update;
   api.toString = () => rootElement?.outerHTML ?? '';
-  api.render = (target) => { if (target && target.appendChild) target.appendChild(rootElement); return rootElement };
+  api.render = (target) => {
+    if (target && target.appendChild) target.appendChild(rootElement);
+    return rootElement;
+  };
+
   Object.keys(api).forEach(name => rootElement[name] = api[name]);
+
   return rootElement;
 }
 `.trim()
 
-      return { code, map: null }
+      return { code }
     },
   }
 }
