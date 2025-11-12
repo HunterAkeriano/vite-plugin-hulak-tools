@@ -61,42 +61,96 @@ function hulakHandlebars(options = {}) {
         fileContent = processPartials(fileContent, {})
 
         const templateFunction = `
-export default function(props = {}) {
-  let template = ${JSON.stringify(fileContent)};
-  
-  let maxIterations = 10;
-  let iteration = 0;
-  
-  while (iteration < maxIterations && template.indexOf('{{#if') !== -1) {
-    iteration++;
+export default function(initialProps = {}) {
+  const sourceTemplate = ${JSON.stringify(fileContent)};
+  let currentProps = { ...initialProps };
+
+  function createHtml(props) {
+    let template = sourceTemplate;
+    let maxIterations = 10;
+    let iteration = 0;
     
-    template = template.replace(/\\{\\{#if\\s+([^}]+?)\\}\\}(.*?)\\{\\{else\\s*\\}\\}(.*?)\\{\\{\\/if\\s*\\}\\}/g, (match, condition, ifBlock, elseBlock) => {
-      const key = condition.trim();
-      return props[key] ? ifBlock : elseBlock;
-    });
+    while (iteration < maxIterations && template.indexOf('{{#if') !== -1) {
+      iteration++;
+      
+      template = template.replace(/\\{\\{#if\\s+([^}]+?)\\}\\}(.*?)\\{\\{else\\s*\\}\\}(.*?)\\{\\{\\/if\\s*\\}\\}/g, (match, condition, ifBlock, elseBlock) => {
+        const key = condition.trim();
+        return props[key] ? ifBlock : elseBlock;
+      });
 
-    template = template.replace(/\\{\\{#if\\s+([^}]+?)\\}\\}(.*?)\\{\\{\\/if\\s*\\}\\}/g, (match, condition, block) => {
-      const key = condition.trim();
-      return props[key] ? block : '';
-    });
+      template = template.replace(/\\{\\{#if\\s+([^}]+?)\\}\\}(.*?)\\{\\{\\/if\\s*\\}\\}/g, (match, condition, block) => {
+        const key = condition.trim();
+        return props[key] ? block : '';
+      });
 
-    template = template.replace(/\\{\\{#if\\s*\\((eq\\s+([^\\s]+)\\s+"([^"]+)"\\s*)\\)\\}\\}([\\s\\S]*?)\\{\\{else\\s*\\}\\}([\\s\\S]*?)\\{\\{\\/if\\s*\\}\\}/g, (match, fullCond, propKey, expectedVal, ifBlock, elseBlock) => {
-      return (props[propKey] === expectedVal) ? ifBlock : elseBlock;
-    });
+      template = template.replace(/\\{\\{#if\\s*\\((eq\\s+([^\\s]+)\\s+"([^"]+)"\\s*)\\)\\}\\}([\\s\\S]*?)\\{\\{else\\s*\\}\\}([\\s\\S]*?)\\{\\{\\/if\\s*\\}\\}/g, (match, fullCond, propKey, expectedVal, ifBlock, elseBlock) => {
+        return (props[propKey] === expectedVal) ? ifBlock : elseBlock;
+      });
 
-    template = template.replace(/\\{\\{#if\\s*\\((eq\\s+([^\\s]+)\\s+"([^"]+)"\\s*)\\)\\}\\}([\\s\\S]*?)\\{\\{\\/if\\s*\\}\\}/g, (match, fullCond, propKey, expectedVal, block) => {
-      return (props[propKey] === expectedVal) ? block : '';
+      template = template.replace(/\\{\\{#if\\s*\\((eq\\s+([^\\s]+)\\s+"([^"]+)"\\s*)\\)\\}\\}([\\s\\S]*?)\\{\\{\\/if\\s*\\}\\}/g, (match, fullCond, propKey, expectedVal, block) => {
+        return (props[propKey] === expectedVal) ? block : '';
+      });
+    }
+
+    Object.keys(props).forEach(key => {
+      const regex = new RegExp(\`\\\\{\\\\{\\\\s*\${key}\\\\s*\\\\}\\\\}\`, 'g');
+      template = template.replace(regex, props[key] || '');
     });
+    
+    template = template.replace(/\\s[a-zA-Z0-9_-]+=['"]\\s*['"]/g, '');
+    template = template.replace(/\\{\\{[^}]+?\\}\\}/g, '');
+
+    return template;
   }
 
-  Object.keys(props).forEach(key => {
-    const regex = new RegExp(\`\\\\{\\\\{\\\\s*\${key}\\\\s*\\\\}\\\\}\`, 'g');
-    template = template.replace(regex, props[key] || '');
+  function renderElement(props) {
+    const htmlString = createHtml(props);
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = htmlString.trim();
+    return tempContainer.firstElementChild;
+  }
+  
+  let rootElement = renderElement(currentProps);
+  const methods = {};
+
+  function update(newProps) {
+    currentProps = { ...currentProps, ...newProps };
+    
+    if (rootElement.parentElement) {
+      const parent = rootElement.parentElement;
+      const newElement = renderElement(currentProps);
+      
+      Object.keys(methods).forEach(key => {
+        newElement[key] = methods[key];
+      });
+
+      parent.replaceChild(newElement, rootElement);
+      rootElement = newElement;
+      return newElement;
+    } else {
+      const newElement = renderElement(currentProps);
+      Object.keys(methods).forEach(key => {
+        newElement[key] = methods[key];
+      });
+      rootElement = newElement;
+      return newElement;
+    }
+  }
+
+  methods.update = update;
+  methods.toString = () => rootElement.outerHTML;
+  methods.render = (target) => {
+    if (target && target.appendChild) {
+      target.appendChild(rootElement);
+    }
+    return rootElement;
+  };
+  
+  Object.keys(methods).forEach(key => {
+    rootElement[key] = methods[key];
   });
 
-  template = template.replace(/\\{\\{[^}]+?\\}\\}/g, '');
-
-  return template;
+  return rootElement;
 }
         `.trim()
 

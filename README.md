@@ -1,8 +1,8 @@
 # Hulak Plugins
 
-A collection of powerful Vite plugins designed to enhance your development workflow with loader page blocking and Handlebars template processing capabilities.
+A collection of powerful Vite plugins designed to enhance your development workflow with loader page blocking and **reactive Handlebars template processing** capabilities.
 
-**Keywords:** vite, vite-plugin, handlebars, html-templates, template-engine, partials, html-imports, vite-handlebars, static-templates, build-tools, frontend-tools, component-templates, html-partials, vite-tooling, handlebars-templates, template-loader, html-modules, javascript-templates, vite-html, handlebars-integration
+**Keywords:** vite, vite-plugin, handlebars, html-templates, template-engine, partials, html-imports, vite-handlebars, static-templates, build-tools, frontend-tools, component-templates, html-partials, vite-tooling, handlebars-templates, template-loader, html-modules, javascript-templates, vite-html, handlebars-integration, reactive-components
 
 ## 📦 Installation
 
@@ -40,13 +40,15 @@ export default defineConfig({
 Provides page loading blocking functionality during the build process.
 
 ### 2. **hulakHandlebars**
-**The missing bridge between `vite-plugin-handlebars` and JavaScript!**
+**The missing bridge between `vite-plugin-handlebars` and JavaScript with reactive capabilities!**
 
 While `vite-plugin-handlebars` is excellent for building multi-page applications with server-side Handlebars rendering, it doesn't allow you to **import HTML templates directly into your JavaScript** for client-side use.
 
 `hulakHandlebars` solves this by enabling you to:
-- 🎯 **Import HTML as JavaScript functions** - Use your Handlebars templates client-side
-- 🔄 **Work alongside vite-plugin-handlebars** - Use both together seamlessly
+- 🎯 **Import HTML as reactive JavaScript components** - Use your Handlebars templates client-side
+- 🔄 **Reactive updates** - Update component state and automatically re-render
+- 🎨 **DOM element methods** - Direct `.render()`, `.update()`, and `.toString()` methods
+- 🤝 **Work alongside vite-plugin-handlebars** - Use both together seamlessly
 - 📦 **Zero runtime dependencies** - No Handlebars library needed in production bundle
 - ⚡ **Compile-time processing** - All template logic resolved at build time
 - 🔧 **Full Handlebars syntax** - Partials, conditionals, variables, nested parameters
@@ -77,7 +79,7 @@ export default defineConfig({
 
 Now you get:
 - ✅ **MPA with Handlebars** via `vite-plugin-handlebars`
-- ✅ **Dynamic JS templates** via `hulakHandlebars`
+- ✅ **Reactive JS components** via `hulakHandlebars`
 - ✅ **Best of both worlds!**
 
 ## ⚙️ Configuration Options
@@ -130,7 +132,7 @@ Without `hulakHandlebars`, you're forced to:
 - Install additional template libraries (bloats your bundle)
 
 #### The Solution
-With `hulakHandlebars` plugin, you can **import your Handlebars HTML files directly into JavaScript** as template functions!
+With `hulakHandlebars` plugin, you can **import your Handlebars HTML files directly into JavaScript** as reactive component functions!
 
 **Step 1:** Enable the plugin in your Vite config
 
@@ -167,7 +169,7 @@ export default defineConfig({
   <p class="email">{{email}}</p>
   
   {{#if isPremium}}
-    <span class="badge">Premium User</span>
+    <span class="badge premium">Premium User</span>
   {{else}}
     <span class="badge">Free User</span>
   {{/if}}
@@ -192,25 +194,295 @@ export default defineConfig({
 // src/app.js
 import userCardTemplate from './html/components/user-card.html'
 
-const userData = {
+// Create a component with initial props
+const userCard = userCardTemplate({
   name: 'John Doe',
   email: 'john@example.com',
   avatar: '/images/john.jpg',
   isPremium: true,
   isOnline: true
+})
+
+// Render it to the DOM
+userCard.render(document.getElementById('app'))
+
+// Update the component reactively
+setTimeout(() => {
+  userCard.update({ 
+    isPremium: false,
+    isOnline: false 
+  })
+}, 3000)
+
+// Or get HTML as string
+console.log(userCard.toString())
+```
+
+## 🔥 Reactive Component API
+
+Each imported template returns a **reactive DOM element** with built-in methods:
+
+### Component Methods
+
+#### `.render(target)`
+Appends the component to a target element.
+
+```javascript
+import button from './button.html'
+
+const btn = button({ label: 'Click Me', disabled: false })
+btn.render(document.body)
+```
+
+#### `.update(newProps)`
+Updates the component with new props and automatically re-renders in place.
+
+```javascript
+import counter from './counter.html'
+
+const counterEl = counter({ count: 0 })
+counterEl.render(document.getElementById('app'))
+
+// Update reactively
+setInterval(() => {
+  const currentCount = parseInt(counterEl.textContent)
+  counterEl.update({ count: currentCount + 1 })
+}, 1000)
+```
+
+#### `.toString()`
+Returns the current HTML as a string.
+
+```javascript
+import card from './card.html'
+
+const cardEl = card({ title: 'Hello', description: 'World' })
+const htmlString = cardEl.toString()
+console.log(htmlString) // <div class="card">...</div>
+```
+
+### Real-World Examples
+
+#### Example 1: Interactive Counter
+
+```html
+<!-- src/html/components/counter.html -->
+<div class="counter">
+  <h3>Count: {{count}}</h3>
+  <button class="increment">+</button>
+  <button class="decrement">-</button>
+</div>
+```
+
+```javascript
+// src/app.js
+import counterTemplate from './html/components/counter.html'
+
+const counter = counterTemplate({ count: 0 })
+counter.render(document.getElementById('app'))
+
+// Add event listeners that update the component
+counter.querySelector('.increment').addEventListener('click', () => {
+  const current = parseInt(counter.querySelector('h3').textContent.split(': ')[1])
+  counter.update({ count: current + 1 })
+})
+
+counter.querySelector('.decrement').addEventListener('click', () => {
+  const current = parseInt(counter.querySelector('h3').textContent.split(': ')[1])
+  counter.update({ count: current - 1 })
+})
+```
+
+#### Example 2: Dynamic Status Card
+
+```html
+<!-- src/html/components/status-card.html -->
+<div class="status-card {{status}}">
+  <div class="icon">
+    {{#if (eq status "online")}}
+      ✓
+    {{else}}
+      ✗
+    {{/if}}
+  </div>
+  <h3>{{username}}</h3>
+  <p>Status: {{status}}</p>
+  {{#if lastSeen}}
+    <small>Last seen: {{lastSeen}}</small>
+  {{/if}}
+</div>
+```
+
+```javascript
+// src/status-manager.js
+import statusCard from './html/components/status-card.html'
+
+class StatusManager {
+  constructor(container) {
+    this.card = statusCard({
+      username: 'Guest',
+      status: 'offline',
+      lastSeen: null
+    })
+    
+    this.card.render(container)
+  }
+  
+  setOnline(username) {
+    this.card.update({
+      username: username,
+      status: 'online',
+      lastSeen: null
+    })
+  }
+  
+  setOffline(lastSeen) {
+    this.card.update({
+      status: 'offline',
+      lastSeen: lastSeen
+    })
+  }
 }
 
-// Template is now a function that accepts props
-const html = userCardTemplate(userData)
+// Usage
+const manager = new StatusManager(document.getElementById('status'))
+manager.setOnline('John Doe')
 
-// Use it anywhere in your JS!
-document.getElementById('app').innerHTML = html
+setTimeout(() => {
+  manager.setOffline('2 minutes ago')
+}, 5000)
+```
 
-// Update dynamically
-button.addEventListener('click', () => {
-  const newHtml = userCardTemplate({ ...userData, isPremium: false })
-  element.innerHTML = newHtml
-})
+#### Example 3: Todo List with Dynamic Updates
+
+```html
+<!-- src/html/components/todo-item.html -->
+<li class="todo-item {{#if completed}}completed{{/if}}">
+  <input type="checkbox" {{#if completed}}checked{{/if}}>
+  <span class="text">{{text}}</span>
+  <button class="delete">×</button>
+</li>
+```
+
+```javascript
+// src/todo-app.js
+import todoItemTemplate from './html/components/todo-item.html'
+
+class TodoList {
+  constructor(container) {
+    this.container = container
+    this.todos = new Map()
+  }
+  
+  addTodo(id, text) {
+    const todoEl = todoItemTemplate({ 
+      text: text, 
+      completed: false 
+    })
+    
+    // Store reference
+    this.todos.set(id, todoEl)
+    
+    // Attach event listeners
+    todoEl.querySelector('input').addEventListener('change', (e) => {
+      todoEl.update({ completed: e.target.checked })
+    })
+    
+    todoEl.querySelector('.delete').addEventListener('click', () => {
+      todoEl.remove()
+      this.todos.delete(id)
+    })
+    
+    // Render to container
+    todoEl.render(this.container)
+  }
+  
+  toggleTodo(id) {
+    const todo = this.todos.get(id)
+    const isCompleted = todo.querySelector('input').checked
+    todo.update({ completed: !isCompleted })
+  }
+}
+
+// Usage
+const todoList = new TodoList(document.getElementById('todos'))
+todoList.addTodo(1, 'Buy groceries')
+todoList.addTodo(2, 'Write code')
+todoList.addTodo(3, 'Read documentation')
+```
+
+#### Example 4: Notification System
+
+```html
+<!-- src/html/components/notification.html -->
+<div class="notification {{type}}">
+  <span class="icon">
+    {{#if (eq type "success")}}✓{{/if}}
+    {{#if (eq type "error")}}✗{{/if}}
+    {{#if (eq type "info")}}ℹ{{/if}}
+  </span>
+  <div class="content">
+    <h4>{{title}}</h4>
+    <p>{{message}}</p>
+  </div>
+  <button class="close">×</button>
+</div>
+```
+
+```javascript
+// src/notification-manager.js
+import notificationTemplate from './html/components/notification.html'
+
+class NotificationManager {
+  constructor() {
+    this.container = document.getElementById('notifications')
+    this.notifications = []
+  }
+  
+  show(type, title, message, duration = 5000) {
+    const notification = notificationTemplate({
+      type: type,
+      title: title,
+      message: message
+    })
+    
+    // Auto-dismiss
+    setTimeout(() => {
+      notification.remove()
+      this.notifications = this.notifications.filter(n => n !== notification)
+    }, duration)
+    
+    // Manual close
+    notification.querySelector('.close').addEventListener('click', () => {
+      notification.remove()
+      this.notifications = this.notifications.filter(n => n !== notification)
+    })
+    
+    notification.render(this.container)
+    this.notifications.push(notification)
+    
+    return notification
+  }
+  
+  success(title, message) {
+    return this.show('success', title, message)
+  }
+  
+  error(title, message) {
+    return this.show('error', title, message)
+  }
+  
+  info(title, message) {
+    return this.show('info', title, message)
+  }
+}
+
+// Usage
+const notifications = new NotificationManager()
+
+notifications.success('Saved!', 'Your changes have been saved')
+notifications.error('Error', 'Failed to load data')
+notifications.info('Update', 'New version available')
 ```
 
 #### Supported Features
@@ -239,7 +511,7 @@ button.addEventListener('click', () => {
 
 **✅ Equality Helper**
 ```html
-<button type="{{#if (eq type "submit")}}submit{{else}}button{{/if}}">
+<button class="{{#if (eq type "primary")}}btn-primary{{else}}btn-default{{/if}}">
   Click me
 </button>
 ```
@@ -266,111 +538,16 @@ button.addEventListener('click', () => {
 <p>{{description}}</p>
 ```
 
-#### Real-World Example: Dynamic Product Catalog
-
-```html
-<!-- src/html/components/product-list.html -->
-<div class="products-container">
-  <h1>{{pageTitle}}</h1>
-  
-  {{#if hasDiscount}}
-    <div class="promo-banner">
-      🎉 Special Sale - {{discountPercent}}% OFF!
-    </div>
-  {{/if}}
-  
-  <div class="products-grid">
-    {{> product-card 
-       productName=name 
-       image=thumbnail 
-       price=currentPrice
-       onSale=isOnSale}}
-  </div>
-</div>
-```
-
-```html
-<!-- src/html/components/product-card.html -->
-<article class="product-card">
-  <img src="{{image}}" alt="{{productName}}">
-  <h3>{{productName}}</h3>
-  <p class="description">{{description}}</p>
-  
-  {{#if onSale}}
-    <div class="price">
-      <span class="old-price">${{originalPrice}}</span>
-      <span class="sale-price">${{salePrice}}</span>
-    </div>
-  {{else}}
-    <div class="price">${{price}}</div>
-  {{/if}}
-  
-  <button data-id="{{productId}}">Add to Cart</button>
-</article>
-```
-
+**✅ Reactive Updates**
 ```javascript
-// src/pages/catalog.js
-import productListTemplate from './html/components/product-list.html'
-
-// Fetch products from API
-const products = await fetch('/api/products').then(r => r.json())
-
-// Render each product using the imported template
-const productsHTML = products.map(product => 
-  productListTemplate({
-    pageTitle: 'Summer Collection 2024',
-    hasDiscount: true,
-    discountPercent: 25,
-    name: product.name,
-    description: product.description,
-    thumbnail: product.image,
-    isOnSale: product.onSale,
-    originalPrice: product.regularPrice,
-    currentPrice: product.salePrice,
-    productId: product.id
-  })
-).join('')
-
-document.querySelector('.catalog').innerHTML = productsHTML
-```
-
-#### Dynamic Component Updates
-
-```javascript
-// src/components/notification-manager.js
-import notificationTemplate from './html/components/notification.html'
-
-class NotificationManager {
-  constructor() {
-    this.container = document.querySelector('.notifications')
-  }
-  
-  add(notification) {
-    const html = notificationTemplate({
-      message: notification.message,
-      type: notification.type,
-      timestamp: notification.time
-    })
-    
-    this.container.insertAdjacentHTML('beforeend', html)
-  }
-  
-  clear() {
-    this.container.innerHTML = notificationTemplate({
-      message: 'No notifications',
-      type: 'empty'
-    })
-  }
-}
-
-// Use it anywhere
-const manager = new NotificationManager()
-manager.add({ message: 'New comment!', type: 'info', time: 'now' })
+const component = template({ name: 'John' })
+component.update({ name: 'Jane' }) // Automatically re-renders
 ```
 
 #### Benefits
 - ✅ **Integrates with vite-plugin-handlebars** - Use both plugins together
+- ✅ **Reactive Components** - Update props and auto re-render
+- ✅ **DOM Element Methods** - Direct `.render()`, `.update()`, `.toString()`
 - ✅ **Zero Runtime Dependencies** - No Handlebars library in production bundle
 - ✅ **Direct Imports** - Import `.html` files just like any other module
 - ✅ **Partials Support** - Reuse HTML components with parameter passing
@@ -385,7 +562,7 @@ manager.add({ message: 'New comment!', type: 'info', time: 'now' })
 
 ### Use Case: Combining Both Plugins
 
-**Scenario:** You have a multi-page site built with `vite-plugin-handlebars`, but need dynamic client-side components.
+**Scenario:** You have a multi-page site built with `vite-plugin-handlebars`, but need dynamic reactive client-side components.
 
 ```javascript
 // vite.config.js
@@ -404,7 +581,7 @@ export default defineConfig({
       }
     }),
     
-    // Dynamic JS components
+    // Reactive JS components
     hulakPlugins({
       enableHandlebars: true,
       handlebarsOptions: {
@@ -427,7 +604,7 @@ Now you can:
   {{> header}}
   
   <div id="dynamic-content">
-    <!-- This will be filled by JavaScript -->
+    <!-- This will be filled by reactive JavaScript components -->
   </div>
   
   {{> footer}}
@@ -437,14 +614,23 @@ Now you can:
 ```
 
 ```javascript
-// src/main.js - Dynamic content using hulakHandlebars
+// src/main.js - Reactive components using hulakHandlebars
 import productCard from './components/product-card.html'
 
 fetch('/api/products')
   .then(r => r.json())
   .then(products => {
-    const html = products.map(p => productCard(p)).join('')
-    document.getElementById('dynamic-content').innerHTML = html
+    const container = document.getElementById('dynamic-content')
+    
+    products.forEach(product => {
+      const card = productCard(product)
+      card.render(container)
+      
+      // Add interactivity
+      card.querySelector('button').addEventListener('click', () => {
+        card.update({ inCart: true })
+      })
+    })
   })
 ```
 
@@ -489,6 +675,8 @@ export default {
 - ✨ **Simple API** - Easy-to-use configuration with sensible defaults
 - 🔧 **Modular** - Enable only the plugins you need
 - 🎨 **Handlebars-like Syntax** - Full template processing with partials and conditionals
+- 🔄 **Reactive Components** - Update props and automatically re-render
+- 🎯 **DOM Element Methods** - `.render()`, `.update()`, `.toString()`
 - 🔗 **Works with vite-plugin-handlebars** - Perfect companion for importing templates to JS
 - ⚡ **Vite Optimized** - Built specifically for Vite projects
 - 📦 **Zero Config** - Works out of the box with minimal setup
@@ -506,6 +694,13 @@ interface HulakPluginConfig {
     handlebarsOptions?: {
         partialDirectory?: string
     }
+}
+
+// Component interface
+interface ReactiveComponent extends HTMLElement {
+    update(newProps: Record<string, any>): HTMLElement
+    render(target: HTMLElement): HTMLElement
+    toString(): string
 }
 ```
 
