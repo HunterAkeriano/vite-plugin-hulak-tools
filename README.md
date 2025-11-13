@@ -2,7 +2,7 @@
 
 A collection of powerful Vite plugins designed to enhance your development workflow with loader page blocking, **reactive Handlebars template processing**, and **flexible multi-page routing** capabilities.
 
-**Keywords:** vite, vite-plugin, handlebars, html-templates, template-engine, partials, html-imports, vite-handlebars, static-templates, build-tools, frontend-tools, component-templates, html-partials, vite-tooling, handlebars-templates, template-loader, html-modules, javascript-templates, vite-html, handlebars-integration, reactive-components, routing, multi-page, dynamic-routes
+**Keywords:** vite, vite-plugin, handlebars, html-templates, template-engine, partials, html-imports, vite-handlebars, static-templates, build-tools, frontend-tools, component-templates, html-partials, vite-tooling, handlebars-templates, template-loader, html-modules, javascript-templates, vite-html, handlebars-integration, reactive-components, routing, multi-page, static-routes
 
 ## 📦 Installation
 
@@ -34,14 +34,7 @@ export default defineConfig({
                 routes: {
                     '/': 'index.html',
                     '/about': 'pages/about.html',
-                    '/user/:id': 'pages/user.html'
-                },
-                staticParams: {
-                    '/user/:id': [
-                        { id: '1' },
-                        { id: '2' },
-                        { id: '3' }
-                    ]
+                    '/contact': 'pages/contact.html'
                 }
             }
         })
@@ -69,14 +62,12 @@ While `vite-plugin-handlebars` is excellent for building multi-page applications
 - 🔧 **Full Handlebars syntax** - Partials, conditionals, variables, nested parameters
 
 ### 3. **hulakRouter**
-**Flexible multi-page routing with dynamic parameters and custom HTML transformation!**
+**Simple multi-page routing with clean URLs and custom HTML transformation!**
 
-Create powerful multi-page applications with static and dynamic routes. Perfect for landing pages, portfolios, documentation sites, and any project requiring multiple HTML pages with clean URLs.
+Create powerful multi-page applications with static routes. Perfect for landing pages, portfolios, documentation sites, and any project requiring multiple HTML pages with clean URLs.
 
 `hulakRouter` provides:
 - 🛣️ **Static routes** - Map URLs to HTML files (`'/about': 'pages/about.html'`)
-- 🎯 **Dynamic routes** - Use URL parameters (`'/user/:id': 'pages/user.html'`)
-- 🏗️ **Static generation** - Pre-render dynamic routes at build time with `staticParams`
 - 🔄 **HTML transformation** - Custom `transformHtml` function for injecting data
 - ⚡ **Dev server support** - Works perfectly in development mode
 - 📦 **Build optimization** - Generates proper folder structure for clean URLs
@@ -105,7 +96,8 @@ export default defineConfig({
       routerOptions: {
         routes: {
           '/': 'index.html',
-          '/products/:id': 'pages/product.html'
+          '/about': 'pages/about.html',
+          '/products': 'pages/products.html'
         }
       }
     })
@@ -116,7 +108,7 @@ export default defineConfig({
 Now you get:
 - ✅ **MPA with Handlebars** via `vite-plugin-handlebars`
 - ✅ **Reactive JS components** via `hulakHandlebars`
-- ✅ **Flexible routing** via `hulakRouter`
+- ✅ **Clean URL routing** via `hulakRouter`
 - ✅ **Best of all worlds!**
 
 ## ⚙️ Configuration Options
@@ -127,7 +119,7 @@ Now you get:
 |--------|------|---------|-------------|
 | `enableLoaderPage` | `boolean` | `false` | Enable the loader page blocking plugin |
 | `enableHandlebars` | `boolean` | `false` | Enable Handlebars template processing for JS imports |
-| `enableRouter` | `boolean` | `false` | Enable multi-page routing with dynamic parameters |
+| `enableRouter` | `boolean` | `false` | Enable multi-page routing |
 | `handlebarsOptions` | `object` | `{}` | Configuration options for Handlebars plugin |
 | `routerOptions` | `object` | `{}` | Configuration options for Router plugin |
 
@@ -142,7 +134,6 @@ Now you get:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `routes` | `object` | `{}` | Map of URL patterns to HTML file paths |
-| `staticParams` | `object` | `{}` | Parameters for static generation of dynamic routes |
 | `transformHtml` | `function` | `undefined` | Custom function to transform HTML before rendering |
 
 ## 📖 Usage Examples
@@ -190,42 +181,6 @@ export default {
 **Development:** Navigate to `http://localhost:5173/about`  
 **Build:** Generates `dist/about/index.html`
 
-### Dynamic Routes with Parameters
-
-Create routes with URL parameters:
-
-```javascript
-routerOptions: {
-  routes: {
-    '/user/:id': 'pages/user.html',
-    '/blog/:slug': 'pages/blog-post.html',
-    '/products/:category/:id': 'pages/product.html'
-  },
-  staticParams: {
-    '/user/:id': [
-      { id: 'john' },
-      { id: 'jane' },
-      { id: 'admin' }
-    ],
-    '/blog/:slug': [
-      { slug: 'getting-started' },
-      { slug: 'advanced-tips' }
-    ],
-    '/products/:category/:id': [
-      { category: 'electronics', id: 'laptop-01' },
-      { category: 'electronics', id: 'phone-02' },
-      { category: 'books', id: 'novel-01' }
-    ]
-  }
-}
-```
-
-**Development:** Navigate to `http://localhost:5173/user/john`  
-**Build:** Generates:
-- `dist/user/john/index.html`
-- `dist/user/jane/index.html`
-- `dist/user/admin/index.html`
-
 ### Custom HTML Transformation
 
 Inject dynamic data into your HTML:
@@ -233,37 +188,38 @@ Inject dynamic data into your HTML:
 ```javascript
 routerOptions: {
   routes: {
-    '/user/:id': 'pages/user.html'
+    '/about': 'pages/about.html',
+    '/team': 'pages/team.html'
   },
-  staticParams: {
-    '/user/:id': [
-      { id: 'john' },
-      { id: 'jane' }
-    ]
-  },
-  transformHtml: async (html, { url, filePath, params }) => {
-    // Example: Inject user data
-    const userData = await fetchUserData(params.id)
+  transformHtml: async (html, { url, filePath }) => {
+    // Example: Inject page-specific data
+    if (url === '/about') {
+      const aboutData = await fetchAboutData()
+      return html
+        .replace('{{COMPANY_NAME}}', aboutData.companyName)
+        .replace('{{DESCRIPTION}}', aboutData.description)
+    }
+    
+    if (url === '/team') {
+      const teamData = await fetchTeamData()
+      return html.replace('{{TEAM_MEMBERS}}', generateTeamList(teamData))
+    }
     
     return html
-      .replace('{{USER_NAME}}', userData.name)
-      .replace('{{USER_EMAIL}}', userData.email)
-      .replace('{{USER_BIO}}', userData.bio)
   }
 }
 ```
 
 ```html
-<!-- pages/user.html -->
+<!-- pages/about.html -->
 <!DOCTYPE html>
 <html>
 <head>
-  <title>User Profile</title>
+  <title>About Us</title>
 </head>
 <body>
-  <h1>{{USER_NAME}}</h1>
-  <p>Email: {{USER_EMAIL}}</p>
-  <p>Bio: {{USER_BIO}}</p>
+  <h1>{{COMPANY_NAME}}</h1>
+  <p>{{DESCRIPTION}}</p>
 </body>
 </html>
 ```
@@ -276,25 +232,15 @@ routerOptions: {
 routerOptions: {
   routes: {
     '/': 'index.html',
-    '/docs/:section': 'pages/docs.html',
-    '/api/:endpoint': 'pages/api.html'
+    '/docs/getting-started': 'pages/docs-getting-started.html',
+    '/docs/installation': 'pages/docs-installation.html',
+    '/docs/configuration': 'pages/docs-configuration.html',
+    '/api/authentication': 'pages/api-authentication.html',
+    '/api/users': 'pages/api-users.html'
   },
-  staticParams: {
-    '/docs/:section': [
-      { section: 'getting-started' },
-      { section: 'installation' },
-      { section: 'configuration' },
-      { section: 'deployment' }
-    ],
-    '/api/:endpoint': [
-      { endpoint: 'authentication' },
-      { endpoint: 'users' },
-      { endpoint: 'posts' }
-    ]
-  },
-  transformHtml: (html, { params }) => {
-    // Load markdown content based on section
-    const content = loadMarkdown(params.section)
+  transformHtml: (html, { url }) => {
+    // Load markdown content based on URL
+    const content = loadMarkdownForUrl(url)
     return html.replace('{{CONTENT}}', content)
   }
 }
@@ -306,23 +252,16 @@ routerOptions: {
 routerOptions: {
   routes: {
     '/': 'index.html',
-    '/projects/:slug': 'pages/project.html',
-    '/blog/:year/:month/:slug': 'pages/blog-post.html'
+    '/projects/ecommerce': 'pages/project-ecommerce.html',
+    '/projects/mobile-app': 'pages/project-mobile.html',
+    '/projects/dashboard': 'pages/project-dashboard.html',
+    '/blog/new-year-goals': 'pages/blog-post-1.html',
+    '/blog/web-performance': 'pages/blog-post-2.html'
   },
-  staticParams: {
-    '/projects/:slug': [
-      { slug: 'ecommerce-platform' },
-      { slug: 'mobile-app' },
-      { slug: 'web-dashboard' }
-    ],
-    '/blog/:year/:month/:slug': [
-      { year: '2024', month: '01', slug: 'new-year-goals' },
-      { year: '2024', month: '02', slug: 'web-performance' }
-    ]
-  },
-  transformHtml: async (html, { params, url }) => {
+  transformHtml: async (html, { url }) => {
     if (url.startsWith('/projects/')) {
-      const project = await loadProject(params.slug)
+      const projectName = url.split('/').pop()
+      const project = await loadProject(projectName)
       return html
         .replace('{{PROJECT_TITLE}}', project.title)
         .replace('{{PROJECT_DESCRIPTION}}', project.description)
@@ -333,43 +272,34 @@ routerOptions: {
 }
 ```
 
-#### Example 3: E-commerce Product Pages
+#### Example 3: Marketing Site
 
 ```javascript
 routerOptions: {
   routes: {
     '/': 'index.html',
-    '/category/:category': 'pages/category.html',
-    '/product/:id': 'pages/product.html'
+    '/features': 'pages/features.html',
+    '/pricing': 'pages/pricing.html',
+    '/about': 'pages/about.html',
+    '/contact': 'pages/contact.html',
+    '/blog': 'pages/blog.html'
   },
-  staticParams: {
-    '/category/:category': [
-      { category: 'electronics' },
-      { category: 'clothing' },
-      { category: 'books' }
-    ],
-    '/product/:id': generateProductIds() // ['prod-001', 'prod-002', ...]
-  },
-  transformHtml: async (html, { params, url }) => {
-    if (url.startsWith('/product/')) {
-      const product = await fetchProduct(params.id)
-      
-      return html
-        .replace('{{PRODUCT_NAME}}', product.name)
-        .replace('{{PRODUCT_PRICE}}', product.price)
-        .replace('{{PRODUCT_IMAGE}}', product.image)
-        .replace('{{PRODUCT_DESCRIPTION}}', product.description)
-        .replace('{{META_TITLE}}', `${product.name} - Buy Now`)
-        .replace('{{META_DESCRIPTION}}', product.shortDescription)
+  transformHtml: async (html, { url }) => {
+    // Inject global data
+    const siteData = await loadSiteData()
+    
+    let result = html
+      .replace('{{SITE_NAME}}', siteData.name)
+      .replace('{{META_DESCRIPTION}}', siteData.description)
+    
+    // Inject page-specific data
+    if (url === '/pricing') {
+      const pricingData = await fetchPricingData()
+      result = result.replace('{{PRICING_PLANS}}', generatePricingTable(pricingData))
     }
     
-    return html
+    return result
   }
-}
-
-function generateProductIds() {
-  // Fetch from database or API
-  return products.map(p => ({ id: p.id }))
 }
 ```
 
@@ -384,59 +314,28 @@ routes: {
 // → dist/about/index.html
 ```
 
-**✅ Dynamic Routes**
-```javascript
-routes: {
-  '/user/:id': 'pages/user.html'
-}
-// → http://localhost:5173/user/123
-// Access params in transformHtml
-```
-
-**✅ Nested Parameters**
-```javascript
-routes: {
-  '/blog/:year/:month/:slug': 'pages/post.html'
-}
-// → http://localhost:5173/blog/2024/01/my-post
-```
-
-**✅ Static Generation**
-```javascript
-staticParams: {
-  '/user/:id': [
-    { id: '1' },
-    { id: '2' }
-  ]
-}
-// Generates:
-// - dist/user/1/index.html
-// - dist/user/2/index.html
-```
-
 **✅ HTML Transformation**
 ```javascript
-transformHtml: (html, { url, params }) => {
-  return html.replace('{{DYNAMIC}}', params.id)
+transformHtml: (html, { url, filePath }) => {
+  return html.replace('{{DYNAMIC}}', 'content')
 }
 ```
 
 **✅ Clean URLs**
 ```
 /about      → dist/about/index.html
-/user/123   → dist/user/123/index.html
+/contact    → dist/contact/index.html
 ```
 
 ### Router Benefits
 
 - ✅ **SEO Friendly** - Clean URLs without file extensions
-- ✅ **Static Generation** - Pre-render dynamic routes at build time
+- ✅ **Static Generation** - Pre-render pages at build time
 - ✅ **Dev Server Support** - Works perfectly in development
-- ✅ **Flexible Routing** - Static and dynamic routes
+- ✅ **Simple Configuration** - Easy route mapping
 - ✅ **HTML Transformation** - Inject data before rendering
 - ✅ **Type Safe** - Full TypeScript support
 - ✅ **Build Optimization** - Proper folder structure generation
-- ✅ **Parameter Inheritance** - Access URL params in transformHtml
 
 ### Importing HTML Templates into JavaScript
 
@@ -451,8 +350,8 @@ transformHtml: (html, { url, params }) => {
 - 🎨 **Handlebars-like Syntax** - Full template processing with partials and conditionals
 - 🔄 **Reactive Components** - Update props and automatically re-render
 - 🎯 **DOM Element Methods** - `.render()`, `.update()`, `.toString()`
-- 🛣️ **Flexible Routing** - Static and dynamic routes with parameters
-- 🏗️ **Static Generation** - Pre-render pages at build time
+- 🛣️ **Clean URL Routing** - Static routes with proper folder structure
+- 🔄 **HTML Transformation** - Inject data before rendering
 - 🔗 **Works with vite-plugin-handlebars** - Perfect companion for importing templates to JS
 - ⚡ **Vite Optimized** - Built specifically for Vite projects
 - 📦 **Zero Config** - Works out of the box with minimal setup
@@ -473,13 +372,11 @@ interface HulakPluginConfig {
     }
     routerOptions?: {
         routes?: Record<string, string>
-        staticParams?: Record<string, Array<Record<string, string>>>
         transformHtml?: (
             html: string,
             context: {
                 url: string
                 filePath: string
-                params: Record<string, string>
                 server?: any
             }
         ) => string | Promise<string>
