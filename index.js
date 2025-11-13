@@ -1,23 +1,31 @@
 import hulakLoaderPage from './hulak-loader-page.js'
 import hulakHandlebars from './hulak-handlebars.js'
+import hulakRouter from './hulak-router.js'
 
 /**
  * @typedef {object} HulakPluginConfig
- * @property {boolean} [enableLoaderPage=true] - Enables the loader page plugin (`hulakLoaderPage`), which blocks the page until it's fully loaded.
- * @property {boolean} [enableHandlebars=true] - Enables the Handlebars processing plugin (`hulakHandlebars`).
- * @property {object} [handlebarsOptions={}] - Configuration options for the Handlebars plugin.
- * @property {string} [handlebarsOptions.partialDirectory] - Directory path containing Handlebars partials.
+ * @property {boolean} [enableLoaderPage=false]
+ * @property {boolean} [enableHandlebars=false]
+ * @property {object} [handlebarsOptions={}]
+ * @property {string} [handlebarsOptions.partialDirectory]
+ * @property {boolean} [enableRouter=false]
+ * @property {object} [routerOptions={}]
  */
 
 /**
  * Combined function for Hulak Vite plugins.
- * Allows enabling or disabling individual plugins and configuring their behavior via options.
  *
  * @param {HulakPluginConfig} [config={}] - Plugin configuration object.
  * @returns {import('vite').Plugin[]} An array of active Vite plugins based on the provided configuration.
  */
 function hulakPlugins(config = {}) {
-  const { enableLoaderPage = false, enableHandlebars = false, handlebarsOptions = {} } = config
+  const {
+    enableLoaderPage = false,
+    enableHandlebars = false,
+    handlebarsOptions = {},
+    enableRouter = false,
+    routerOptions = {}
+  } = config
 
   const plugins = []
 
@@ -27,6 +35,10 @@ function hulakPlugins(config = {}) {
 
   if (enableHandlebars) {
     plugins.push(hulakHandlebars(handlebarsOptions))
+  }
+
+  if (enableRouter) {
+    plugins.push(hulakRouter(routerOptions))
   }
 
   return plugins
