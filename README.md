@@ -1,8 +1,31 @@
-# Hulak Plugins
+# Hulak Handlebars Plugin
 
-A collection of powerful Vite plugins designed to enhance your development workflow with loader page blocking, **reactive Handlebars template processing**, and **flexible multi-page routing** capabilities.
+**The missing bridge between static HTML templates and reactive JavaScript components!**
 
-**Keywords:** vite, vite-plugin, handlebars, html-templates, template-engine, partials, html-imports, vite-handlebars, static-templates, build-tools, frontend-tools, component-templates, html-partials, vite-tooling, handlebars-templates, template-loader, html-modules, javascript-templates, vite-html, handlebars-integration, reactive-components, routing, multi-page, static-routes
+A powerful Vite plugin that enables you to **import HTML templates directly into your JavaScript** as reactive, DOM-ready components. Write clean HTML with Handlebars syntax, import it like a module, and get fully functional DOM elements with built-in reactivity.
+
+**Keywords:** vite, vite-plugin, handlebars, html-templates, template-engine, partials, html-imports, vite-handlebars, static-templates, build-tools, frontend-tools, component-templates, html-partials, reactive-components, javascript-templates, vite-html, handlebars-integration
+
+**Version:** 3.0.0
+
+---
+
+## ✨ Why Hulak?
+
+While `vite-plugin-handlebars` is excellent for multi-page applications with server-side rendering, it doesn't allow you to **import HTML templates into JavaScript** for client-side use.
+
+**Hulak solves this:**
+
+- 🎯 **Import HTML as JavaScript components** - Use templates client-side
+- 🔄 **Reactive updates** - Update component state and automatically re-render
+- 🎨 **DOM element methods** - Direct `.render()`, `.update()`, and `.toString()` methods
+- 🤝 **Works alongside vite-plugin-handlebars** - Use both together seamlessly
+- 📦 **Zero runtime dependencies** - No Handlebars library needed in production
+- ⚡ **Compile-time processing** - All template logic resolved at build time
+- 🔧 **Full Handlebars syntax** - Partials, conditionals, loops, nested parameters
+- 🎭 **TypeScript support** - Full type definitions included
+
+---
 
 ## 📦 Installation
 
@@ -14,401 +37,108 @@ yarn add vite-plugin-hulak-tools -D
 pnpm add vite-plugin-hulak-tools -D
 ```
 
+---
+
 ## 🚀 Quick Start
 
+### Basic Configuration
+
 ```javascript
 // vite.config.js
 import { defineConfig } from 'vite'
 import { hulakPlugins } from 'vite-plugin-hulak-tools'
 
 export default defineConfig({
-    plugins: [
-        hulakPlugins({
-            enableLoaderPage: true,
-            enableHandlebars: true,
-            enableRouter: true,
-            handlebarsOptions: {
-                partialDirectory: './src/partials'
-            },
-            routerOptions: {
-                routes: {
-                    '/': 'index.html',
-                    '/about': 'pages/about.html',
-                    '/contact': 'pages/contact.html'
-                }
-            }
-        })
-    ]
-})
-```
-
-## 🔌 Available Plugins
-
-### 1. **hulakLoaderPage**
-Provides page loading blocking functionality during the build process.
-
-### 2. **hulakHandlebars**
-**The missing bridge between `vite-plugin-handlebars` and JavaScript with reactive capabilities!**
-
-While `vite-plugin-handlebars` is excellent for building multi-page applications with server-side Handlebars rendering, it doesn't allow you to **import HTML templates directly into your JavaScript** for client-side use.
-
-`hulakHandlebars` solves this by enabling you to:
-- 🎯 **Import HTML as reactive JavaScript components** - Use your Handlebars templates client-side
-- 🔄 **Reactive updates** - Update component state and automatically re-render
-- 🎨 **DOM element methods** - Direct `.render()`, `.update()`, and `.toString()` methods
-- 🤝 **Work alongside vite-plugin-handlebars** - Use both together seamlessly
-- 📦 **Zero runtime dependencies** - No Handlebars library needed in production bundle
-- ⚡ **Compile-time processing** - All template logic resolved at build time
-- 🔧 **Full Handlebars syntax** - Partials, conditionals, variables, nested parameters
-
-### 3. **hulakRouter**
-**Simple multi-page routing with clean URLs and custom HTML transformation!**
-
-Create powerful multi-page applications with static routes. Perfect for landing pages, portfolios, documentation sites, and any project requiring multiple HTML pages with clean URLs.
-
-`hulakRouter` provides:
-- 🛣️ **Static routes** - Map URLs to HTML files (`'/about': 'pages/about.html'`)
-- 🔄 **HTML transformation** - Custom `transformHtml` function for injecting data
-- ⚡ **Dev server support** - Works perfectly in development mode
-- 📦 **Build optimization** - Generates proper folder structure for clean URLs
-- 🎨 **Handlebars integration** - Works seamlessly with `hulakHandlebars`
-
-### Perfect combination:
-```javascript
-// vite.config.js
-import { defineConfig } from 'vite'
-import handlebars from 'vite-plugin-handlebars'
-import { hulakPlugins } from 'vite-plugin-hulak-tools'
-
-export default defineConfig({
-    plugins: [
-        handlebars({
-            // For your multi-page HTML generation
-            partialDirectory: resolve(__dirname, './src/partials'),
-        }),
-        hulakPlugins({
-            enableHandlebars: true,
-            enableRouter: true,
-            handlebarsOptions: {
-                // For importing templates into JS
-                partialDirectory: './src/html/components'
-            },
-            routerOptions: {
-                routes: {
-                    '/': 'index.html',
-                    '/about': 'pages/about.html',
-                    '/products': 'pages/products.html'
-                }
-            }
-        })
-    ]
-})
-```
-
-Now you get:
-- ✅ **MPA with Handlebars** via `vite-plugin-handlebars`
-- ✅ **Reactive JS components** via `hulakHandlebars`
-- ✅ **Clean URL routing** via `hulakRouter`
-- ✅ **Best of all worlds!**
-
-## ⚙️ Configuration Options
-
-### Main Configuration
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enableLoaderPage` | `boolean` | `false` | Enable the loader page blocking plugin |
-| `enableHandlebars` | `boolean` | `false` | Enable Handlebars template processing for JS imports |
-| `enableRouter` | `boolean` | `false` | Enable multi-page routing |
-| `handlebarsOptions` | `object` | `{}` | Configuration options for Handlebars plugin |
-| `routerOptions` | `object` | `{}` | Configuration options for Router plugin |
-
-### Handlebars Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `partialDirectory` | `string` | `'src/html/'` | Path to the directory containing HTML partials |
-
-### Router Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `routes` | `object` | `{}` | Map of URL patterns to HTML file paths |
-| `transformHtml` | `function` | `undefined` | Custom function to transform HTML before rendering |
-
-## 📖 Usage Examples
-
-### Enable Only Loader Page
-
-```javascript
-import { hulakPlugins } from 'vite-plugin-hulak-tools'
-
-export default {
-    plugins: [
-        hulakPlugins({
-            enableLoaderPage: true
-        })
-    ]
-}
-```
-
-## 🛣️ Router Plugin Usage
-
-### Basic Static Routes
-
-Map URLs to HTML files:
-
-```javascript
-import { hulakPlugins } from 'vite-plugin-hulak-tools'
-
-export default {
-    plugins: [
-        hulakPlugins({
-            enableRouter: true,
-            routerOptions: {
-                routes: {
-                    '/': 'index.html',
-                    '/about': 'pages/about.html',
-                    '/contact': 'pages/contact.html',
-                    '/blog': 'pages/blog.html'
-                }
-            }
-        })
-    ]
-}
-```
-
-**Development:** Navigate to `http://localhost:5173/about`  
-**Build:** Generates `dist/about/index.html`
-
-### Custom HTML Transformation
-
-Inject dynamic data into your HTML:
-
-```javascript
-routerOptions: {
-    routes: {
-        '/about': 'pages/about.html',
-            '/team': 'pages/team.html'
-    },
-    transformHtml: async (html, { url, filePath }) => {
-        // Example: Inject page-specific data
-        if (url === '/about') {
-            const aboutData = await fetchAboutData()
-            return html
-                .replace('{{COMPANY_NAME}}', aboutData.companyName)
-                .replace('{{DESCRIPTION}}', aboutData.description)
-        }
-
-        if (url === '/team') {
-            const teamData = await fetchTeamData()
-            return html.replace('{{TEAM_MEMBERS}}', generateTeamList(teamData))
-        }
-
-        return html
-    }
-}
-```
-
-```html
-<!-- pages/about.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>About Us</title>
-</head>
-<body>
-<h1>{{COMPANY_NAME}}</h1>
-<p>{{DESCRIPTION}}</p>
-</body>
-</html>
-```
-
-### Real-World Router Examples
-
-#### Example 1: Documentation Site
-
-```javascript
-routerOptions: {
-    routes: {
-        '/': 'index.html',
-            '/docs/getting-started': 'pages/docs-getting-started.html',
-            '/docs/installation': 'pages/docs-installation.html',
-            '/docs/configuration': 'pages/docs-configuration.html',
-            '/api/authentication': 'pages/api-authentication.html',
-            '/api/users': 'pages/api-users.html'
-    },
-    transformHtml: (html, { url }) => {
-        // Load markdown content based on URL
-        const content = loadMarkdownForUrl(url)
-        return html.replace('{{CONTENT}}', content)
-    }
-}
-```
-
-#### Example 2: Portfolio Site
-
-```javascript
-routerOptions: {
-    routes: {
-        '/': 'index.html',
-            '/projects/ecommerce': 'pages/project-ecommerce.html',
-            '/projects/mobile-app': 'pages/project-mobile.html',
-            '/projects/dashboard': 'pages/project-dashboard.html',
-            '/blog/new-year-goals': 'pages/blog-post-1.html',
-            '/blog/web-performance': 'pages/blog-post-2.html'
-    },
-    transformHtml: async (html, { url }) => {
-        if (url.startsWith('/projects/')) {
-            const projectName = url.split('/').pop()
-            const project = await loadProject(projectName)
-            return html
-                .replace('{{PROJECT_TITLE}}', project.title)
-                .replace('{{PROJECT_DESCRIPTION}}', project.description)
-                .replace('{{PROJECT_IMAGES}}', generateImageGallery(project.images))
-        }
-        return html
-    }
-}
-```
-
-#### Example 3: Marketing Site
-
-```javascript
-routerOptions: {
-    routes: {
-        '/': 'index.html',
-            '/features': 'pages/features.html',
-            '/pricing': 'pages/pricing.html',
-            '/about': 'pages/about.html',
-            '/contact': 'pages/contact.html',
-            '/blog': 'pages/blog.html'
-    },
-    transformHtml: async (html, { url }) => {
-        // Inject global data
-        const siteData = await loadSiteData()
-
-        let result = html
-            .replace('{{SITE_NAME}}', siteData.name)
-            .replace('{{META_DESCRIPTION}}', siteData.description)
-
-        // Inject page-specific data
-        if (url === '/pricing') {
-            const pricingData = await fetchPricingData()
-            result = result.replace('{{PRICING_PLANS}}', generatePricingTable(pricingData))
-        }
-
-        return result
-    }
-}
-```
-
-### Router Features
-
-**✅ Static Routes**
-```javascript
-routes: {
-    '/about': 'pages/about.html'
-}
-// → http://localhost:5173/about
-// → dist/about/index.html
-```
-
-**✅ HTML Transformation**
-```javascript
-transformHtml: (html, { url, filePath }) => {
-    return html.replace('{{DYNAMIC}}', 'content')
-}
-```
-
-**✅ Clean URLs**
-```
-/about      → dist/about/index.html
-/contact    → dist/contact/index.html
-```
-
-### Router Benefits
-
-- ✅ **SEO Friendly** - Clean URLs without file extensions
-- ✅ **Static Generation** - Pre-render pages at build time
-- ✅ **Dev Server Support** - Works perfectly in development
-- ✅ **Simple Configuration** - Easy route mapping
-- ✅ **HTML Transformation** - Inject data before rendering
-- ✅ **Type Safe** - Full TypeScript support
-- ✅ **Build Optimization** - Proper folder structure generation
-
-## 🎨 Handlebars Plugin Usage
-
-### Importing HTML Templates into JavaScript
-
-The `hulakHandlebars` plugin allows you to import HTML templates directly into your JavaScript code as reactive components:
-
-```javascript
-// vite.config.js
-import { hulakPlugins } from 'vite-plugin-hulak-tools'
-
-export default {
   plugins: [
     hulakPlugins({
       enableHandlebars: true,
       handlebarsOptions: {
-        partialDirectory: './src/html/components'
+        partialDirectory: './src/components'
       }
     })
   ]
-}
-```
-
-### Basic Usage
-
-```javascript
-// Import HTML template
-import MyComponent from './components/card.html'
-
-// Use as DOM element
-const component = MyComponent({ 
-  title: 'Hello', 
-  content: 'World' 
 })
-
-// Render to page
-document.body.appendChild(component)
-
-// Or get as string
-console.log(component.toString())
 ```
 
-### Template Syntax
+### Your First Component
 
-**Variables:**
+**Create a template:**
 ```html
-<!-- components/greeting.html -->
+<!-- src/components/greeting.html -->
 <div class="greeting">
   <h1>{{title}}</h1>
   <p>{{message}}</p>
 </div>
 ```
 
+**Import and use in JavaScript:**
 ```javascript
 import Greeting from './components/greeting.html'
 
+// Create component with props
 const greeting = Greeting({ 
-  title: 'Welcome!',
-  message: 'Hello from Hulak Handlebars!'
+  title: 'Hello World!',
+  message: 'Welcome to Hulak Handlebars!'
+})
+
+// Render to page
+document.body.appendChild(greeting)
+
+// Update reactively
+greeting.update({ 
+  title: 'Updated!',
+  message: 'Component re-rendered automatically'
 })
 ```
 
-**Conditionals:**
+---
+
+## ⚙️ Configuration Options
+
+### Plugin Configuration
+
+```typescript
+interface HulakPluginConfig {
+  mode?: 'javascript' | 'typescript' | 'js' | 'ts'  // Default: 'javascript'
+  enableHandlebars?: boolean                        // Default: false
+  handlebarsOptions?: {
+    partialDirectory?: string                       // Default: undefined
+  }
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `mode` | `string` | `'javascript'` | Output mode: `'javascript'`/`'js'` or `'typescript'`/`'ts'` |
+| `enableHandlebars` | `boolean` | `false` | Enable the Handlebars plugin |
+| `handlebarsOptions.partialDirectory` | `string` | `undefined` | Path to directory containing HTML partials |
+
+### TypeScript Mode
+
+Enable TypeScript output for better type checking:
+
+```javascript
+hulakPlugins({
+  mode: 'typescript', // or 'ts'
+  enableHandlebars: true,
+  handlebarsOptions: {
+    partialDirectory: './src/components'
+  }
+})
+```
+
+---
+
+## 📖 Template Syntax
+
+### Variables
+
 ```html
 <!-- components/user-card.html -->
 <div class="user-card">
   <h2>{{name}}</h2>
-  {{#if isAdmin}}
-    <span class="badge">Admin</span>
-  {{/if}}
-  {{#unless isActive}}
-    <span class="status">Inactive</span>
-  {{/unless}}
+  <p>{{email}}</p>
+  <span>{{role}}</span>
 </div>
 ```
 
@@ -417,61 +147,110 @@ import UserCard from './components/user-card.html'
 
 const card = UserCard({
   name: 'John Doe',
-  isAdmin: true,
-  isActive: false
+  email: 'john@example.com',
+  role: 'Developer'
 })
 ```
 
-**Loops:**
+### Conditionals
+
 ```html
-<!-- components/list.html -->
-<ul class="items">
+<!-- components/status-badge.html -->
+<div class="badge">
+  {{#if isActive}}
+    <span class="status active">Active</span>
+  {{else}}
+    <span class="status inactive">Inactive</span>
+  {{/if}}
+  
+  {{#unless verified}}
+    <span class="warning">Not Verified</span>
+  {{/unless}}
+</div>
+```
+
+```javascript
+import StatusBadge from './components/status-badge.html'
+
+const badge = StatusBadge({
+  isActive: true,
+  verified: false
+})
+```
+
+### Loops
+
+```html
+<!-- components/product-list.html -->
+<ul class="products">
   {{#each items}}
-    <li>{{this.name}} - ${{this.price}}</li>
+    <li class="product">
+      <h3>{{this.name}}</h3>
+      <p>${{this.price}}</p>
+    </li>
   {{/each}}
 </ul>
 ```
 
 ```javascript
-import List from './components/list.html'
+import ProductList from './components/product-list.html'
 
-const list = List({
+const list = ProductList({
   items: [
-    { name: 'Product 1', price: 10 },
-    { name: 'Product 2', price: 20 }
+    { name: 'Laptop', price: 999 },
+    { name: 'Mouse', price: 29 },
+    { name: 'Keyboard', price: 79 }
   ]
 })
 ```
 
-### Using Partials
+---
 
-Create reusable components with partials:
+## 🧩 Using Partials
 
-**Directory structure:**
+Partials allow you to create reusable sub-components.
+
+### Directory Structure
+
 ```
 src/
-  html/
-    components/
-      card.html
-      button.html
-      user-profile.html
+  components/
+    button.html          ← Partial
+    icon.html           ← Partial
+    card.html           ← Uses partials
+    user-profile.html   ← Main component
 ```
 
-**Partial file (button.html):**
+### Creating Partials
+
+**button.html:**
 ```html
 <button class="btn {{class}}">
   {{text}}
 </button>
 ```
 
-**Main component using partial:**
+**icon.html:**
 ```html
-<!-- user-profile.html -->
+<i class="icon icon-{{name}}"></i>
+```
+
+### Using Partials
+
+```html
+<!-- components/user-profile.html -->
 <div class="profile">
-  <h2>{{username}}</h2>
+  <div class="header">
+    {{> icon name="user"}}
+    <h2>{{username}}</h2>
+  </div>
+  
   <p>{{bio}}</p>
-  {{> button class="primary" text="Follow"}}
-  {{> button class="secondary" text="Message"}}
+  
+  <div class="actions">
+    {{> button class="primary" text="Follow"}}
+    {{> button class="secondary" text="Message"}}
+  </div>
 </div>
 ```
 
@@ -481,7 +260,7 @@ import UserProfile from './components/user-profile.html'
 
 const profile = UserProfile({
   username: 'johndoe',
-  bio: 'Web developer'
+  bio: 'Full-stack developer'
 })
 
 document.body.appendChild(profile)
@@ -489,29 +268,26 @@ document.body.appendChild(profile)
 
 ### Nested Partials with Parameters
 
-Pass parameters to nested partials:
-
 ```html
 <!-- components/card.html -->
 <div class="card">
-  {{> header title=cardTitle}}
-  <div class="content">{{content}}</div>
-  {{> footer author=authorName date=publishDate}}
+  {{> card-header title=cardTitle subtitle=cardSubtitle}}
+  
+  <div class="content">
+    {{content}}
+  </div>
+  
+  {{> card-footer author=authorName date=publishDate}}
 </div>
 ```
 
 ```html
-<!-- components/header.html -->
+<!-- components/card-header.html -->
 <div class="card-header">
   <h3>{{title}}</h3>
-</div>
-```
-
-```html
-<!-- components/footer.html -->
-<div class="card-footer">
-  <span>By {{author}}</span>
-  <span>{{date}}</span>
+  {{#if subtitle}}
+    <p class="subtitle">{{subtitle}}</p>
+  {{/if}}
 </div>
 ```
 
@@ -519,21 +295,25 @@ Pass parameters to nested partials:
 import Card from './components/card.html'
 
 const card = Card({
-  cardTitle: 'My Article',
-  content: 'Article content here...',
+  cardTitle: 'Article Title',
+  cardSubtitle: 'A brief introduction',
+  content: 'Main article content...',
   authorName: 'Jane Smith',
   publishDate: '2024-01-15'
 })
 ```
 
-### Reactive Updates
+---
 
-Update component props and automatically re-render:
+## 🔄 Reactive Updates
+
+Every imported component is a DOM element with reactive update capabilities.
+
+### Basic Update
 
 ```javascript
 import Counter from './components/counter.html'
 
-// Create component
 const counter = Counter({ count: 0 })
 document.body.appendChild(counter)
 
@@ -544,118 +324,171 @@ setInterval(() => {
 }, 1000)
 ```
 
-### DOM Element Methods
-
-Every imported component has these methods:
-
-```javascript
-import Component from './component.html'
-
-const comp = Component({ data: 'value' })
-
-// Render to specific container
-comp.render(document.getElementById('container'))
-
-// Update props and re-render
-comp.update({ data: 'new value' })
-
-// Get HTML as string
-const html = comp.toString()
-console.log(html)
-
-// Use as regular DOM element
-comp.classList.add('active')
-comp.addEventListener('click', handleClick)
-```
-
-### Real-World Examples
-
-#### Example 1: Dynamic Product Card
-
-```html
-<!-- components/product-card.html -->
-<div class="product-card">
-  <img src="{{image}}" alt="{{name}}">
-  <h3>{{name}}</h3>
-  <p class="price">${{price}}</p>
-  {{#if onSale}}
-    <span class="badge sale">On Sale!</span>
-  {{/if}}
-  {{> button text="Add to Cart" class="primary"}}
-</div>
-```
-
-```javascript
-import ProductCard from './components/product-card.html'
-
-// Create multiple product cards
-const products = [
-  { name: 'Laptop', price: 999, image: '/laptop.jpg', onSale: true },
-  { name: 'Mouse', price: 29, image: '/mouse.jpg', onSale: false }
-]
-
-products.forEach(product => {
-  const card = ProductCard(product)
-  document.querySelector('.products-grid').appendChild(card)
-})
-```
-
-#### Example 2: User Dashboard
-
-```html
-<!-- components/dashboard.html -->
-<div class="dashboard">
-  <h1>Welcome, {{userName}}!</h1>
-  
-  <div class="stats">
-    {{#each stats}}
-      {{> stat-card label=this.label value=this.value icon=this.icon}}
-    {{/each}}
-  </div>
-  
-  <div class="recent-activity">
-    <h2>Recent Activity</h2>
-    {{#each activities}}
-      <div class="activity-item">
-        <span class="time">{{this.time}}</span>
-        <span class="action">{{this.action}}</span>
-      </div>
-    {{/each}}
-  </div>
-</div>
-```
+### Real-time Data Updates
 
 ```javascript
 import Dashboard from './components/dashboard.html'
 
 const dashboard = Dashboard({
   userName: 'John',
-  stats: [
-    { label: 'Sales', value: '$12,345', icon: '💰' },
-    { label: 'Users', value: '1,234', icon: '👥' },
-    { label: 'Orders', value: '567', icon: '📦' }
-  ],
-  activities: [
-    { time: '2 min ago', action: 'New order received' },
-    { time: '15 min ago', action: 'User registered' }
-  ]
+  stats: []
 })
 
 document.body.appendChild(dashboard)
+
+// Fetch and update data
+async function updateStats() {
+  const data = await fetch('/api/stats').then(r => r.json())
+  dashboard.update({
+    userName: data.userName,
+    stats: data.stats
+  })
+}
+
+setInterval(updateStats, 5000) // Update every 5 seconds
 ```
 
-#### Example 3: Form with Validation
+---
 
+## 🎨 DOM Element Methods
+
+Every imported component has these built-in methods:
+
+### `.render(target)`
+
+Render component into a specific container:
+
+```javascript
+import Header from './components/header.html'
+
+const header = Header({ title: 'My Site' })
+header.render(document.getElementById('header-container'))
+```
+
+### `.update(newProps)`
+
+Update component props and re-render:
+
+```javascript
+import StatusCard from './components/status-card.html'
+
+const card = StatusCard({ status: 'pending' })
+document.body.appendChild(card)
+
+// Update after action
+setTimeout(() => {
+  card.update({ status: 'completed' })
+}, 2000)
+```
+
+### `.toString()`
+
+Get HTML as string:
+
+```javascript
+import Template from './components/template.html'
+
+const component = Template({ data: 'value' })
+const html = component.toString()
+
+console.log(html) // <div>...</div>
+
+// Use for server-side rendering or logging
+```
+
+### Standard DOM Methods
+
+Components are real DOM elements, so all standard methods work:
+
+```javascript
+import Button from './components/button.html'
+
+const btn = Button({ text: 'Click me' })
+
+// Add classes
+btn.classList.add('active', 'highlight')
+
+// Add event listeners
+btn.addEventListener('click', () => {
+  console.log('Button clicked!')
+})
+
+// Query selectors
+const icon = btn.querySelector('.icon')
+
+// Modify styles
+btn.style.backgroundColor = '#007bff'
+
+// And more...
+document.body.appendChild(btn)
+```
+
+---
+
+## 💡 Real-World Examples
+
+### Example 1: Dynamic Product Card
+
+**Template:**
+```html
+<!-- components/product-card.html -->
+<div class="product-card">
+  <img src="{{image}}" alt="{{name}}">
+  <div class="details">
+    <h3>{{name}}</h3>
+    <p class="description">{{description}}</p>
+    <div class="price-section">
+      <span class="price">${{price}}</span>
+      {{#if onSale}}
+        <span class="badge sale">{{discount}}% OFF</span>
+      {{/if}}
+    </div>
+  </div>
+  {{> button text="Add to Cart" class="primary"}}
+</div>
+```
+
+**JavaScript:**
+```javascript
+import ProductCard from './components/product-card.html'
+
+// Fetch products from API
+const products = await fetch('/api/products').then(r => r.json())
+
+// Create cards
+const container = document.querySelector('.products-grid')
+products.forEach(product => {
+  const card = ProductCard(product)
+  
+  // Add click handler
+  card.querySelector('button').addEventListener('click', () => {
+    addToCart(product.id)
+  })
+  
+  container.appendChild(card)
+})
+```
+
+### Example 2: Interactive Form
+
+**Template:**
 ```html
 <!-- components/contact-form.html -->
 <form class="contact-form">
   <h2>{{formTitle}}</h2>
+  <p class="subtitle">{{formSubtitle}}</p>
   
   {{#each fields}}
     <div class="form-group">
-      <label>{{this.label}}</label>
+      <label for="{{this.name}}">
+        {{this.label}}
+        {{#if this.required}}
+          <span class="required">*</span>
+        {{/if}}
+      </label>
       <input 
         type="{{this.type}}" 
+        id="{{this.name}}"
         name="{{this.name}}"
         placeholder="{{this.placeholder}}"
         {{#if this.required}}required{{/if}}
@@ -667,190 +500,537 @@ document.body.appendChild(dashboard)
 </form>
 ```
 
+**JavaScript:**
 ```javascript
 import ContactForm from './components/contact-form.html'
 
 const form = ContactForm({
   formTitle: 'Get in Touch',
+  formSubtitle: 'We\'d love to hear from you',
   submitText: 'Send Message',
   fields: [
-    { label: 'Name', type: 'text', name: 'name', placeholder: 'Your name', required: true },
-    { label: 'Email', type: 'email', name: 'email', placeholder: 'your@email.com', required: true },
-    { label: 'Message', type: 'textarea', name: 'message', placeholder: 'Your message' }
+    { 
+      label: 'Name', 
+      type: 'text', 
+      name: 'name', 
+      placeholder: 'Your name',
+      required: true 
+    },
+    { 
+      label: 'Email', 
+      type: 'email', 
+      name: 'email', 
+      placeholder: 'your@email.com',
+      required: true 
+    },
+    { 
+      label: 'Message', 
+      type: 'textarea', 
+      name: 'message', 
+      placeholder: 'Your message'
+    }
   ]
+})
+
+// Handle submission
+form.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData)
+  
+  await fetch('/api/contact', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+  
+  // Update form with success message
+  form.update({
+    formTitle: 'Thank You!',
+    formSubtitle: 'We\'ll get back to you soon.',
+    fields: [],
+    submitText: 'Close'
+  })
 })
 
 document.body.appendChild(form)
 ```
 
-### Advanced Features
+### Example 3: Real-time Dashboard
 
-#### Conditional Partials
-
+**Template:**
 ```html
-<!-- components/user-badge.html -->
-<div class="user-badge">
-  {{#if isPremium}}
-    {{> premium-badge}}
-  {{else}}
-    {{> standard-badge}}
-  {{/if}}
+<!-- components/dashboard.html -->
+<div class="dashboard">
+  <header>
+    <h1>Welcome, {{userName}}!</h1>
+    <p class="timestamp">Last updated: {{lastUpdate}}</p>
+  </header>
+  
+  <div class="stats-grid">
+    {{#each stats}}
+      {{> stat-card 
+        label=this.label 
+        value=this.value 
+        change=this.change
+        icon=this.icon
+      }}
+    {{/each}}
+  </div>
+  
+  <div class="recent-activity">
+    <h2>Recent Activity</h2>
+    <ul class="activity-list">
+      {{#each activities}}
+        <li class="activity-item {{this.type}}">
+          <span class="time">{{this.time}}</span>
+          <span class="action">{{this.action}}</span>
+        </li>
+      {{/each}}
+    </ul>
+  </div>
 </div>
 ```
 
-#### Nested Loops
+**JavaScript:**
+```javascript
+import Dashboard from './components/dashboard.html'
 
+// Initial render
+const dashboard = Dashboard({
+  userName: 'Loading...',
+  lastUpdate: new Date().toLocaleTimeString(),
+  stats: [],
+  activities: []
+})
+
+document.body.appendChild(dashboard)
+
+// Fetch and update data
+async function refreshDashboard() {
+  const data = await fetch('/api/dashboard').then(r => r.json())
+  
+  dashboard.update({
+    userName: data.userName,
+    lastUpdate: new Date().toLocaleTimeString(),
+    stats: [
+      { label: 'Revenue', value: data.revenue, change: '+12%', icon: '💰' },
+      { label: 'Users', value: data.users, change: '+5%', icon: '👥' },
+      { label: 'Orders', value: data.orders, change: '-2%', icon: '📦' }
+    ],
+    activities: data.recentActivities
+  })
+}
+
+// Refresh every 10 seconds
+setInterval(refreshDashboard, 10000)
+refreshDashboard() // Initial load
+```
+
+### Example 4: Todo List with State Management
+
+**Template:**
 ```html
-<!-- components/categories.html -->
-<div class="categories">
-  {{#each categories}}
-    <div class="category">
-      <h3>{{this.name}}</h3>
-      <ul>
-        {{#each this.items}}
-          <li>{{this.name}} - ${{this.price}}</li>
-        {{/each}}
-      </ul>
-    </div>
-  {{/each}}
+<!-- components/todo-list.html -->
+<div class="todo-app">
+  <h1>{{title}}</h1>
+  
+  <div class="todo-input">
+    <input type="text" id="new-todo" placeholder="Add a new task...">
+    {{> button text="Add" class="primary add-btn"}}
+  </div>
+  
+  <div class="todo-stats">
+    <span>Total: {{totalCount}}</span>
+    <span>Active: {{activeCount}}</span>
+    <span>Completed: {{completedCount}}</span>
+  </div>
+  
+  <ul class="todo-items">
+    {{#each todos}}
+      <li class="todo-item {{#if this.completed}}completed{{/if}}">
+        <input type="checkbox" {{#if this.completed}}checked{{/if}}>
+        <span>{{this.text}}</span>
+        <button class="delete">×</button>
+      </li>
+    {{/each}}
+  </ul>
 </div>
 ```
 
-#### Dynamic Classes
+**JavaScript:**
+```javascript
+import TodoList from './components/todo-list.html'
 
-```html
-<!-- components/alert.html -->
-<div class="alert alert-{{type}} {{#if dismissible}}dismissible{{/if}}">
-  {{message}}
-  {{#if dismissible}}
-    <button class="close">×</button>
-  {{/if}}
-</div>
+// State
+let todos = []
+
+// Render function
+function renderTodos() {
+  const activeCount = todos.filter(t => !t.completed).length
+  const completedCount = todos.filter(t => t.completed).length
+  
+  todoList.update({
+    title: 'My Tasks',
+    todos: todos,
+    totalCount: todos.length,
+    activeCount: activeCount,
+    completedCount: completedCount
+  })
+}
+
+// Create component
+const todoList = TodoList({
+  title: 'My Tasks',
+  todos: [],
+  totalCount: 0,
+  activeCount: 0,
+  completedCount: 0
+})
+
+// Event handlers
+todoList.querySelector('.add-btn').addEventListener('click', () => {
+  const input = todoList.querySelector('#new-todo')
+  if (input.value.trim()) {
+    todos.push({
+      id: Date.now(),
+      text: input.value.trim(),
+      completed: false
+    })
+    input.value = ''
+    renderTodos()
+  }
+})
+
+todoList.addEventListener('change', (e) => {
+  if (e.target.type === 'checkbox') {
+    const index = [...e.target.closest('ul').children].indexOf(e.target.closest('li'))
+    todos[index].completed = e.target.checked
+    renderTodos()
+  }
+})
+
+todoList.addEventListener('click', (e) => {
+  if (e.target.classList.contains('delete')) {
+    const index = [...e.target.closest('ul').children].indexOf(e.target.closest('li'))
+    todos.splice(index, 1)
+    renderTodos()
+  }
+})
+
+document.body.appendChild(todoList)
 ```
+
+---
+
+## 🤝 Working with vite-plugin-handlebars
+
+Hulak works perfectly alongside `vite-plugin-handlebars` for the best of both worlds:
 
 ```javascript
-import Alert from './components/alert.html'
+// vite.config.js
+import { defineConfig } from 'vite'
+import handlebars from 'vite-plugin-handlebars'
+import { hulakPlugins } from 'vite-plugin-hulak-tools'
 
-const alert = Alert({
-  type: 'success',
-  message: 'Operation completed!',
-  dismissible: true
+export default defineConfig({
+  plugins: [
+    // For multi-page static generation
+    handlebars({
+      partialDirectory: resolve(__dirname, './src/partials'),
+    }),
+    
+    // For importing templates into JS
+    hulakPlugins({
+      enableHandlebars: true,
+      handlebarsOptions: {
+        partialDirectory: './src/components'
+      }
+    })
+  ]
 })
 ```
 
-### Key Features
+**You get:**
+- ✅ **Static HTML pages** via `vite-plugin-handlebars`
+- ✅ **Reactive JS components** via `hulakPlugins`
+- ✅ **Perfect integration** - Use both in the same project
 
-- ✅ **Zero Runtime** - No Handlebars library in production bundle
-- ✅ **Reactive** - Update props and auto re-render
-- ✅ **Type Safe** - Full TypeScript support
-- ✅ **Partials** - Reusable components with parameters
-- ✅ **Conditionals** - `{{#if}}`, `{{#unless}}`, `{{#each}}`
-- ✅ **DOM Methods** - `.render()`, `.update()`, `.toString()`
-- ✅ **Fast** - Compile-time processing
-- ✅ **Clean** - No template strings in JS code
+---
 
-### Best Practices
+## 🎯 Key Features
 
-1. **Organize by feature:**
+- ✨ **Import HTML as JavaScript** - No more template strings in code
+- 🔄 **Reactive updates** - Update props and automatically re-render
+- 🎨 **DOM element methods** - `.render()`, `.update()`, `.toString()`
+- 🧩 **Partials support** - Reusable sub-components with parameters
+- 🔧 **Full Handlebars syntax** - Conditionals, loops, variables
+- 📦 **Zero runtime** - No Handlebars library in production bundle
+- ⚡ **Compile-time processing** - All logic resolved during build
+- 🎭 **TypeScript support** - Full type definitions included
+- 🤝 **Works with vite-plugin-handlebars** - Perfect companion
+- 🚀 **Production ready** - Optimized builds with minimal overhead
+
+---
+
+## 🎓 Best Practices
+
+### 1. Organize by Feature
+
 ```
 src/
-  html/
-    components/
-      common/
-        button.html
-        card.html
-      user/
-        profile.html
-        settings.html
+  components/
+    common/
+      button.html
+      icon.html
+      badge.html
+    forms/
+      input.html
+      select.html
+      textarea.html
+    cards/
+      product-card.html
+      user-card.html
+      stat-card.html
 ```
 
-2. **Use descriptive prop names:**
+### 2. Use Descriptive Prop Names
+
 ```javascript
-// Good
-ProductCard({ productName: 'Laptop', productPrice: 999 })
+// Good ✅
+ProductCard({ 
+  productName: 'Laptop', 
+  productPrice: 999,
+  productImage: '/laptop.jpg'
+})
 
-// Avoid
-ProductCard({ n: 'Laptop', p: 999 })
+// Avoid ❌
+ProductCard({ 
+  n: 'Laptop', 
+  p: 999,
+  i: '/laptop.jpg'
+})
 ```
 
-3. **Keep templates focused:**
-```html
-<!-- Good - single responsibility -->
-<button class="{{class}}">{{text}}</button>
+### 3. Keep Templates Focused
 
-<!-- Avoid - too complex -->
+```html
+<!-- Good ✅ - Single responsibility -->
+<!-- button.html -->
+<button class="btn {{class}}">
+  {{text}}
+</button>
+
+<!-- Avoid ❌ - Too complex -->
+<!-- mega-component.html -->
 <div>
-  <!-- 50 lines of mixed logic -->
+  <!-- 100+ lines of mixed logic -->
 </div>
 ```
 
-4. **Leverage partials for reusability:**
+### 4. Leverage Partials
+
 ```html
-<!-- Reuse common components -->
-{{> button}}
-{{> icon}}
-{{> badge}}
+<!-- Good ✅ - Reusable components -->
+<div class="page">
+  {{> header}}
+  {{> navigation}}
+  {{> content}}
+  {{> footer}}
+</div>
+
+<!-- Avoid ❌ - Duplicated code -->
+<div class="page">
+  <header>...</header> <!-- Repeated in every page -->
+  <nav>...</nav>
+  <main>...</main>
+  <footer>...</footer>
+</div>
 ```
 
-## 🎯 Features
+### 5. Use Semantic Naming
 
-- ✨ **Simple API** - Easy-to-use configuration with sensible defaults
-- 🔧 **Modular** - Enable only the plugins you need
-- 🎨 **Handlebars-like Syntax** - Full template processing with partials and conditionals
-- 🔄 **Reactive Components** - Update props and automatically re-render
-- 🎯 **DOM Element Methods** - `.render()`, `.update()`, `.toString()`
-- 🛣️ **Clean URL Routing** - Static routes with proper folder structure
-- 🔄 **HTML Transformation** - Inject data before rendering
-- 🔗 **Works with vite-plugin-handlebars** - Perfect companion for importing templates to JS
-- ⚡ **Vite Optimized** - Built specifically for Vite projects
-- 📦 **Zero Config** - Works out of the box with minimal setup
-- 🔄 **Nested Partials** - Full parameter inheritance support
-- 🚀 **Production Ready** - Optimized builds with minimal overhead
+```html
+<!-- Good ✅ -->
+<div class="user-profile">
+  <h2 class="user-profile__name">{{name}}</h2>
+  <p class="user-profile__bio">{{bio}}</p>
+</div>
+
+<!-- Avoid ❌ -->
+<div class="up">
+  <h2 class="n">{{name}}</h2>
+  <p class="b">{{bio}}</p>
+</div>
+```
+
+---
 
 ## 🛠️ TypeScript Support
 
-The plugin includes full TypeScript definitions:
+Full TypeScript definitions are included:
 
 ```typescript
 interface HulakPluginConfig {
-    enableLoaderPage?: boolean
-    enableHandlebars?: boolean
-    enableRouter?: boolean
-    handlebarsOptions?: {
-        partialDirectory?: string
-    }
-    routerOptions?: {
-        routes?: Record<string, string>
-        transformHtml?: (
-            html: string,
-            context: {
-                url: string
-                filePath: string
-                server?: any
-            }
-        ) => string | Promise<string>
-    }
+  mode?: 'javascript' | 'typescript' | 'js' | 'ts'
+  enableHandlebars?: boolean
+  handlebarsOptions?: {
+    partialDirectory?: string
+  }
 }
 
-// Component interface
 interface ReactiveComponent extends HTMLElement {
-    update(newProps: Record<string, any>): HTMLElement
-    render(target: HTMLElement): HTMLElement
-    toString(): string
+  update(newProps: Record<string, any>): HTMLElement
+  render(target: HTMLElement): HTMLElement
+  toString(): string
 }
 ```
 
-## 📝 License
+**Usage in TypeScript:**
+
+```typescript
+import { hulakPlugins } from 'vite-plugin-hulak-tools'
+import type { HulakPluginConfig } from 'vite-plugin-hulak-tools'
+
+const config: HulakPluginConfig = {
+  mode: 'typescript',
+  enableHandlebars: true,
+  handlebarsOptions: {
+    partialDirectory: './src/components'
+  }
+}
+
+export default defineConfig({
+  plugins: [hulakPlugins(config)]
+})
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Components Not Updating
+
+Make sure you're calling `.update()` with a new object:
+
+```javascript
+// ❌ Wrong - mutating object
+const props = { count: 0 }
+component.update(props)
+props.count = 1 // Won't trigger update
+
+// ✅ Correct - new object
+component.update({ count: 1 })
+```
+
+### Partials Not Found
+
+Ensure `partialDirectory` points to the correct path:
+
+```javascript
+hulakPlugins({
+  enableHandlebars: true,
+  handlebarsOptions: {
+    partialDirectory: './src/components' // Relative to project root
+  }
+})
+```
+
+### TypeScript Errors on Import
+
+Add `.html` to your TypeScript config:
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+Or create a declaration file:
+
+```typescript
+// src/types/html.d.ts
+declare module '*.html' {
+  const component: (props: any) => HTMLElement & {
+    update(newProps: any): HTMLElement
+    render(target: HTMLElement): HTMLElement
+    toString(): string
+  }
+  export default component
+}
+```
+
+---
+
+## 📋 Migration Guide
+
+### From Version 2.x to 3.0
+
+Version 3.0 focuses exclusively on Handlebars functionality. Router and LoaderPage plugins have been removed.
+
+**Before (v2.x):**
+```javascript
+hulakPlugins({
+  enableLoaderPage: true,    // ❌ Removed
+  enableRouter: true,         // ❌ Removed
+  enableHandlebars: true,
+  handlebarsOptions: { ... },
+  routerOptions: { ... }      // ❌ Removed
+})
+```
+
+**After (v3.0):**
+```javascript
+hulakPlugins({
+  mode: 'javascript',         // ✅ New option
+  enableHandlebars: true,
+  handlebarsOptions: { ... }
+})
+```
+
+**Changes:**
+- ✅ Added `mode` option for JavaScript/TypeScript output
+- ❌ Removed `enableLoaderPage` option
+- ❌ Removed `enableRouter` option
+- ❌ Removed `routerOptions` configuration
+- ✅ Simplified API focused on core functionality
+
+---
+
+## 📄 License
 
 MIT
+
+---
 
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
 
-## 📧 Contact
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-If you have any questions or suggestions, feel free to open an issue.
+---
+
+## 📧 Support
+
+If you have questions or need help:
+
+- 📖 [Documentation](https://github.com/your-repo)
+- 🐛 [Issue Tracker](https://github.com/your-repo/issues)
+- 💬 [Discussions](https://github.com/your-repo/discussions)
+
+---
+
+## 🌟 Show Your Support
+
+If this plugin helped you, please give it a ⭐️ on GitHub!
 
 ---
 
