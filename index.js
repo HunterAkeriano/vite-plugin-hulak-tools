@@ -1,47 +1,53 @@
-import hulakLoaderPage from './hulak-loader-page.js'
 import hulakHandlebars from './hulak-handlebars.js'
-import hulakRouter from './hulak-router.js'
 
 /**
+ * @typedef {'javascript' | 'typescript' | 'js' | 'ts'} HulakMode
+ *
  * @typedef {object} HulakPluginConfig
- * @property {boolean} [enableLoaderPage=false]
+ * @property {HulakMode} [mode='javascript'] - Output mode: 'javascript'/'js' or 'typescript'/'ts'
  * @property {boolean} [enableHandlebars=false]
  * @property {object} [handlebarsOptions={}]
  * @property {string} [handlebarsOptions.partialDirectory]
- * @property {boolean} [enableRouter=false]
- * @property {object} [routerOptions={}]
  */
 
 /**
- * Combined function for Hulak Vite plugins.
+ * Normalize mode string to 'javascript' or 'typescript'
+ * @param {HulakMode} [mode='javascript']
+ * @returns {'javascript' | 'typescript'}
+ */
+function normalizeMode(mode = 'javascript') {
+  const normalized = mode.toLowerCase()
+  if (normalized === 'ts' || normalized === 'typescript') {
+    return 'typescript'
+  }
+  return 'javascript'
+}
+
+/**
+ * Combined function for Hulak Vite plugins, now only handling Handlebars.
  *
  * @param {HulakPluginConfig} [config={}] - Plugin configuration object.
- * @returns {import('vite').Plugin[]} An array of active Vite plugins based on the provided configuration.
+ * @returns {import('vite').Plugin[]} An array containing the Handlebars plugin if enabled, otherwise an empty array.
  */
 function hulakPlugins(config = {}) {
   const {
-    enableLoaderPage = false,
+    mode = 'javascript',
     enableHandlebars = false,
     handlebarsOptions = {},
-    enableRouter = false,
-    routerOptions = {}
   } = config
 
+  const normalizedMode = normalizeMode(mode)
   const plugins = []
 
-  if (enableLoaderPage) {
-    plugins.push(hulakLoaderPage())
-  }
+  const pluginConfig = { mode: normalizedMode }
 
   if (enableHandlebars) {
-    plugins.push(hulakHandlebars(handlebarsOptions))
-  }
-
-  if (enableRouter) {
-    plugins.push(hulakRouter(routerOptions))
+    plugins.push(hulakHandlebars({ ...handlebarsOptions, ...pluginConfig }))
   }
 
   return plugins
 }
 
 export { hulakPlugins }
+
+export default hulakPlugins
