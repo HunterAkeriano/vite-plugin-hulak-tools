@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-hulak-tools",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "Vite plugins that bridge vite-plugin-handlebars to JavaScript: import HTML templates as functions with partials, conditionals, and zero runtime dependencies.",
   "main": "./index.js",
   "type": "module",
