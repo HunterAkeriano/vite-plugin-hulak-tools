@@ -3,6 +3,7 @@
   "version": "1.0.19",
   "description": "Vite plugins that bridge vite-plugin-handlebars to JavaScript: import HTML templates as functions with partials, conditionals, and zero runtime dependencies.",
   "main": "./index.js",
+  "types": "index.d.ts",
   "type": "module",
   "keywords": [
     "vite",
